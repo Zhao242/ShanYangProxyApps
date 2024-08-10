@@ -1,3 +1,8 @@
+#!name=其余App去广告
+#!desc=去瑞幸/中国移动广告，作者@山羊
+#!system=ios
+#!category=山羊去广告
+
 [URL Rewrite]
 #> 中国移动 //client.app.coc.10086.cn 
 ^https:\/\/client\.app\.coc\.10086\.cn\/biz-orange\/DN\/(explorePage\/getAdverList|init\/startInit) - reject
