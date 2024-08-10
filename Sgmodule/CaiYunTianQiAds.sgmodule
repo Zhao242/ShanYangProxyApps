@@ -12,4 +12,4 @@
 
 
 [Mitm]
-hostname = biz.cyapi.cn, starplucker.cyapi.cn, api.caiyunapp.com, cdn-w.caiyunapp.com
+hostname = %APPEND% biz.cyapi.cn, starplucker.cyapi.cn, api.caiyunapp.com, cdn-w.caiyunapp.com
