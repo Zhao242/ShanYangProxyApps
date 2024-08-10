@@ -2,7 +2,7 @@
 #!desc=去除粉笔App广告，作者@山羊
 #!system=ios
 
-[Rewrite]
+[URL Rewrite]
 # 开屏广告
 ^https:\/\/tiku\.fenbi\.com\/activity\/app\/launcher - reject
 # 首页 - 弹窗
