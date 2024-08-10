@@ -1,0 +1,10 @@
+[URL Rewrite]
+#> 中国移动 //client.app.coc.10086.cn 
+^https:\/\/client\.app\.coc\.10086\.cn\/biz-orange\/DN\/(explorePage\/getAdverList|init\/startInit) - reject
+
+#> 瑞幸咖啡
+^https:\/\/capi\.lkcoffee\.com\/resource\/m\/eorder\/product\/popAppTagProductList\?sign - reject
+^https:\/\/capi\.lkcoffee\.com\/resource\/m\/sys\/app\/adposNew\?sign - reject
+
+[MITM]
+hostname = %APPEND% *.lkcoffee.com
