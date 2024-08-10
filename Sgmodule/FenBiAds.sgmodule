@@ -14,10 +14,10 @@
 ^https:\/\/market-api\.fenbi\.com\/iphone\/v1\/assistant\/entrance\/show - reject
 
 # 首页 - 轮播图 [会有空白占位]
-^https:\/\/tiku\.fenbi\.com\/iphone\/\w+\/banners\/v2 - reject
+# ^https:\/\/tiku\.fenbi\.com\/iphone\/\w+\/banners\/v2 - reject
 
 # 首页 - 横向滚动板块
-^https:\/\/keapi\.fenbi\.com\/app\/iphone\/\w+\/small_banner - reject
+# ^https:\/\/keapi\.fenbi\.com\/app\/iphone\/\w+\/small_banner - reject
 
 [MITM]
 hostname = %APPEND% *.fenbi.com
