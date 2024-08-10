@@ -1,15 +1,38 @@
-#!name=其余App去广告
-#!desc=去瑞幸/中国移动广告，作者@山羊
+#!name=App去广告
+#!desc=移动/瑞幸/粉笔/雷达/彩云。作者:山羊
 #!system=ios
 #!category=山羊去广告
 
 [URL Rewrite]
-#> 中国移动 //client.app.coc.10086.cn 
+#> 中国移动
 ^https:\/\/client\.app\.coc\.10086\.cn\/biz-orange\/DN\/(explorePage\/getAdverList|init\/startInit) - reject
 
 #> 瑞幸咖啡
 ^https:\/\/capi\.lkcoffee\.com\/resource\/m\/eorder\/product\/popAppTagProductList\?sign - reject
 ^https:\/\/capi\.lkcoffee\.com\/resource\/m\/sys\/app\/adposNew\?sign - reject
 
+#> 彩云
+^https:\/\/biz\.cyapi\.cn\/(p\/v1\/entries|p\/v1\/trial_card\/info|v2\/product) - reject
+^https:\/\/starplucker\.cyapi\.cn\/v3\/(config\/cypage\/\w+\/conditions|notification\/message_center|operation\/homefeatures) - reject
+
+#> 粉笔
+# 开屏广告
+^https:\/\/tiku\.fenbi\.com\/activity\/app\/launcher - reject
+# 首页 - 弹窗
+^https:\/\/keapi\.fenbi\.com\/app\/iphone\/\w+\/popup - reject
+# 首页 - 新用户注册送好礼全屏弹窗
+^https:\/\/market-api\.fenbi\.com\/iphone\/v1\/assistant\/info - reject
+# 首页 - 悬浮窗 - 笔面常备资料
+^https:\/\/market-api\.fenbi\.com\/iphone\/v1\/assistant\/entrance\/show - reject
+# 首页 - 横向滚动板块
+^https:\/\/keapi\.fenbi\.com\/app\/iphone\/\w+\/small_banner - reject
+
+#> 公考雷达
+^http:\/\/static\.gongkaoleida\.com\/2024\/ad - reject
+^https:\/\/api\.gongkaoleida\.com\/api\/v2\/ad\/info - reject
+
+[Script]
+彩云天气去广告 = type=http-response,pattern=^https:\/\/(wrapper\.cyapi\.cn|api\.caiyunapp\.com|cdn-w\.caiyunapp\.com)\/v1\/activity\?,requires-body=1,max-size=0,binary-body-mode=0,script-path=https://gitlab.com/lodepuly/vpn_tool/-/raw/master/Resource/Script/ColorfulClouds/ColorfulClouds_remove_ads.js,script-update-interval=0
+
 [MITM]
-hostname = %APPEND% *.lkcoffee.com
+hostname = %APPEND% *.lkcoffee.com,biz.cyapi.cn, starplucker.cyapi.cn, api.caiyunapp.com, cdn-w.caiyunapp.com,*.fenbi.com, *.gongkaoleida.com
