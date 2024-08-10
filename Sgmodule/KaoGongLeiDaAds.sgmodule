@@ -4,8 +4,8 @@
 #!category=山羊去广告
 
 [URL Rewrite]
-^https:\/\/api\.gongkaoleida\.com\/api\/v2\/ad\/info - reject
 ^http:\/\/static\.gongkaoleida\.com\/2024\/ad - reject
+^https:\/\/api\.gongkaoleida\.com\/api\/v2\/ad\/info - reject
 
-[Mitm]
-hostname = %APPEND% static.gongkaoleida.com, api.gongkaoleida.com
+[MITM]
+hostname = %APPEND% *.gongkaoleida.com
