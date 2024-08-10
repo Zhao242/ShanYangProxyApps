@@ -1,0 +1,10 @@
+#!name=考公雷达去广告
+#!desc=去除考公雷达App广告，作者@山羊
+#!system=ios
+
+[Rewrite]
+^https:\/\/api\.gongkaoleida\.com\/api\/v2\/ad\/info - reject
+^http:\/\/static\.gongkaoleida\.com\/2024\/ad - reject
+
+[Mitm]
+hostname = static.gongkaoleida.com, api.gongkaoleida.com
