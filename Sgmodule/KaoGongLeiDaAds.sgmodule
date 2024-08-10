@@ -8,4 +8,4 @@
 ^http:\/\/static\.gongkaoleida\.com\/2024\/ad - reject
 
 [Mitm]
-hostname = static.gongkaoleida.com, api.gongkaoleida.com
+hostname = %APPEND% static.gongkaoleida.com, api.gongkaoleida.com
