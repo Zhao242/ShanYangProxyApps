@@ -20,4 +20,4 @@
 # ^https:\/\/keapi\.fenbi\.com\/app\/iphone\/\w+\/small_banner - reject
 
 [Mitm]
-hostname = keapi.fenbi.com, market-api.fenbi.com, tiku.fenbi.com
+hostname = %APPEND% keapi.fenbi.com, market-api.fenbi.com, tiku.fenbi.com
