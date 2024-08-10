@@ -11,5 +11,5 @@
 彩云天气去广告 = type=http-response,pattern=^https:\/\/(wrapper\.cyapi\.cn|api\.caiyunapp\.com|cdn-w\.caiyunapp\.com)\/v1\/activity\?,requires-body=1,max-size=0,binary-body-mode=0,script-path=https://gitlab.com/lodepuly/vpn_tool/-/raw/master/Resource/Script/ColorfulClouds/ColorfulClouds_remove_ads.js,script-update-interval=0
 
 
-[Mitm]
+[MITM]
 hostname = %APPEND% biz.cyapi.cn, starplucker.cyapi.cn, api.caiyunapp.com, cdn-w.caiyunapp.com
