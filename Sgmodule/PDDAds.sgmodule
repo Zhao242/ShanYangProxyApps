@@ -4,14 +4,14 @@
 #!category=山羊去广告
 
 [Rule]
-DOMAIN, titan.pinduoduo.com, reject
-DOMAIN, apm.pinduoduo.com, reject
-DOMAIN, m.pinduoduo.net, reject
-DOMAIN, ta-a.pinduoduo.com, reject
-DOMAIN, ta.pinduoduo.com, reject
-DOMAIN, th-a.pinduoduo.com, reject
-DOMAIN, th-b.pinduoduo.com, reject
-DOMAIN, th.pinduoduo.com, reject
+DOMAIN, titan.pinduoduo.com, REJECT
+DOMAIN, apm.pinduoduo.com, REJECT
+DOMAIN, m.pinduoduo.net, REJECT
+DOMAIN, ta-a.pinduoduo.com, REJECT
+DOMAIN, ta.pinduoduo.com, REJECT
+DOMAIN, th-a.pinduoduo.com, REJECT
+DOMAIN, th-b.pinduoduo.com, REJECT
+DOMAIN, th.pinduoduo.com, REJECT
 
 [URL Rewrite]
 ^https:\/\/api\.pinduoduo\.com\/search_hotquery - reject
