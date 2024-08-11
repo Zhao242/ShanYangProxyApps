@@ -1,7 +1,7 @@
 #!name=拼多多去广告
-#!desc=拼多多APP去广告及优化处理。作者：山羊🐐
+#!desc=拼多多APP去广告及多余模块去除。作者：山羊🐐
 #!system=ios
-#!category=山羊去广告
+#!category=山羊移动端App学习
 
 [Rule]
 DOMAIN, titan.pinduoduo.com, REJECT
