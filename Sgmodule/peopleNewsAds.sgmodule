@@ -9,7 +9,9 @@
 ^https:\/\/cdnjdphoto\.aikan\.pdnews\.cn\/sjbj-20240731\/image\/display - reject
 
 [Script]
-人民号/视频 = type=http-response,pattern=^https:\/\/pdapis\.pdnews\.cn\/api\/rmrb-bff-display-zh\/display\/zh\/c\/bottomNavGroup,requires-body=1,max-size=0,binary-body-mode=0,script-path=https://raw.githubusercontent.com/Zhao242/ShanYangProxyApps/main/Js/PeopleNewButton.js,script-update-interval=0
+人民号/视频底部去除 = type=http-response,pattern=^https:\/\/pdapis\.pdnews\.cn\/api\/rmrb-bff-display-zh\/display\/zh\/c\/bottomNavGroup,requires-body=1,max-size=0,binary-body-mode=0,script-path=https://raw.githubusercontent.com/Zhao242/ShanYangProxyApps/main/Js/PeopleNewButton.js,script-update-interval=0
+
+去除广告列表 = type=http-response,pattern=^https:\/\/pdapis\.pdnews\.cn\/api\/rmrb-bff-display-zh\/display\/zh\/c\/pageInfo\/v2,requires-body=1,max-size=0,binary-body-mode=0,script-path=https://raw.githubusercontent.com/Zhao242/ShanYangProxyApps/main/Js/PeopleNewButton.js,script-update-interval=0
 
 [MITM]
 hostname = %APPEND% *.aikan.pdnews.cn , pdapis.pdnews.cn
