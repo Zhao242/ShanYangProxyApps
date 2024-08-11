@@ -1,20 +1,26 @@
+/**
+ * 人民日报 广告去除和底部导航定制 - Surge 脚本
+ * 2024-08-11
+ */
 const url = $request.url;
-function handleResponse(body) {
-    let obj = JSON.parse(body);
+let body = $response.body;
+let obj = JSON.parse(body);
 
-    // 检查是否存在bottomNavList，并进行处理
-    if (obj.data && obj.data.bottomNavList) {
-        // 过滤掉名为"人民号"和"视频"的条目
-        obj.data.bottomNavList = obj.data.bottomNavList.filter(item => item.name !== "人民号" && item.name !== "视频");
-    }
-
-    return JSON.stringify(obj); 
-}
-
-// 判断是否是目标URL
-if (url.includes("https://pdapis.pdnews.cn/api/rmrb-bff-display-zh/display/zh/c/bottomNavGroup")) {
-    let modifiedBody = handleResponse($response.body);
-    $done({body: modifiedBody});
+// 针对pageInfo的响应去除广告列表
+if (url.includes("/api/rmrb-bff-display-zh/display/zh/c/pageInfo/v2")) {
+  if (obj.data && obj.data.compAdList) {
+    obj.data.compAdList = [];
+  }
+  body = JSON.stringify(obj);
+  $done({body});
+} else if (url.includes("https://pdapis.pdnews.cn/api/rmrb-bff-display-zh/display/zh/c/bottomNavGroup")) {
+  // 针对bottomNavGroup的响应过滤底部导航
+  if (obj.data && obj.data.bottomNavList) {
+    obj.data.bottomNavList = obj.data.bottomNavList.filter(item => item.name !== "人民号" && item.name !== "视频");
+  }
+  body = JSON.stringify(obj);
+  $done({body: body});
 } else {
-    $done({});
+  // 如果URL不匹配，直接返回未修改的响应
+  $done({});
 }
