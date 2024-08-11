@@ -1,0 +1,15 @@
+#!name=人民日报去广告
+#!desc=人民日报去广告及优化界面（去除视频/人民号）。作者:山羊🐐
+#!system=ios
+#!category=山羊去广告
+
+[URL Rewrite]
+^https:\/\/cdnpdadv\.aikan\.pdnews\.cn\/image\/adv - reject
+^https:\/\/cdnjdphoto\.aikan\.pdnews\.cn\/image\/activity - reject
+^https:\/\/cdnjdphoto\.aikan\.pdnews\.cn\/sjbj-20240731\/image\/display - reject
+
+[Script]
+人民号/视频 = type=http-response,pattern=^https:\/\/pdapis\.pdnews\.cn\/api\/rmrb-bff-display-zh\/display\/zh\/c\/bottomNavGroup,requires-body=1,max-size=0,binary-body-mode=0,script-path=https://raw.githubusercontent.com/Zhao242/ShanYangProxyApps/main/Js/PeopleNewButton.js,script-update-interval=0
+
+[MITM]
+hostname = %APPEND% *.aikan.pdnews.cn , pdapis.pdnews.cn
