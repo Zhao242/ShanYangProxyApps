@@ -19,26 +19,32 @@
 ^https:\/\/acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idlemtopsearch\.search\.discover\/1\.0 - reject
 
 [Script]
+# 首页顶部标签 搜索栏填充词 首页闲鱼币入口、底部发布球 商品信息流广告 定位地区页面的信息流广告
+# https://github.com/fmz200/wool_scripts/raw/main/Scripts/xianyu/xianyu_ads.js
+
+# 个人主页 / 旧版首页顶部频道菜单
+# https://raw.githubusercontent.com/kelv1n1n/script/main/js/goodfish.js
+
 # 首页顶部标签
-首页顶部标签 = type=http-response, pattern=^https:\/\/(g-)?acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idle\.home\.whale\.modulet\/, requires-body=1, max-size=0, binary-body-mode=0, script-path=https://github.com/fmz200/wool_scripts/raw/main/Scripts/xianyu/xianyu_ads.js, script-update-interval=0
+首页顶部标签 = type=http-response, pattern=^https:\/\/(g-)?acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idle\.home\.whale\.modulet\/, requires-body=1, max-size=0, binary-body-mode=0, script-path=https://raw.githubusercontent.com/Zhao242/ShanYangProxyApps/main/Js/xianyu.js, script-update-interval=0
 
 # 搜索栏填充词
-搜索栏填充词 = type=http-response, pattern=^https:\/\/(g-)?acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idlemtopsearch\.search\.shade\/, requires-body=1, max-size=0, binary-body-mode=0, script-path=https://github.com/fmz200/wool_scripts/raw/main/Scripts/xianyu/xianyu_ads.js, script-update-interval=0
+搜索栏填充词 = type=http-response, pattern=^https:\/\/(g-)?acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idlemtopsearch\.search\.shade\/, requires-body=1, max-size=0, binary-body-mode=0, script-path=https://raw.githubusercontent.com/Zhao242/ShanYangProxyApps/main/Js/xianyu.js, script-update-interval=0
 
 # 首页闲鱼币入口、底部发布球
-首页闲鱼币入口、底部发布球 = type=http-response, pattern=^https:\/\/(g-)?acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idle\.user\.strategy\.list\/, requires-body=1, max-size=0, binary-body-mode=0, script-path=https://github.com/fmz200/wool_scripts/raw/main/Scripts/xianyu/xianyu_ads.js, script-update-interval=0
+首页闲鱼币入口、底部发布球 = type=http-response, pattern=^https:\/\/(g-)?acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idle\.user\.strategy\.list\/, requires-body=1, max-size=0, binary-body-mode=0, script-path=https://raw.githubusercontent.com/Zhao242/ShanYangProxyApps/main/Js/xianyu.js, script-update-interval=0
 
 # 商品信息流广告
-商品信息流广告 = type=http-response, pattern=^https:\/\/(g-)?acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idlehome\.home\.nextfresh\/, requires-body=1, max-size=0, binary-body-mode=0, script-path=https://github.com/fmz200/wool_scripts/raw/main/Scripts/xianyu/xianyu_ads.js, script-update-interval=0
+商品信息流广告 = type=http-response, pattern=^https:\/\/(g-)?acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idlehome\.home\.nextfresh\/, requires-body=1, max-size=0, binary-body-mode=0, script-path=https://raw.githubusercontent.com/Zhao242/ShanYangProxyApps/main/Js/xianyu.js, script-update-interval=0
 
 # 定位地区页面的信息流广告
-定位地区页面的信息流广告 = type=http-response, pattern=^https:\/\/(g-)?acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idle\.local\.home\/, requires-body=1, max-size=0, binary-body-mode=0, script-path=https://github.com/fmz200/wool_scripts/raw/main/Scripts/xianyu/xianyu_ads.js, script-update-interval=0
+定位地区页面的信息流广告 = type=http-response, pattern=^https:\/\/(g-)?acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idle\.local\.home\/, requires-body=1, max-size=0, binary-body-mode=0, script-path=https://raw.githubusercontent.com/Zhao242/ShanYangProxyApps/main/Js/xianyu.js, script-update-interval=0
 
 # 个人主页
-个人主页 = type=http-response, pattern=^https:\/\/acs\.m\.goofish\.com\/gw\/mtop\.idle\.user\.page\.my\.adapter\/, requires-body=1, max-size=0, binary-body-mode=0, script-path=https://raw.githubusercontent.com/kelv1n1n/script/main/js/goodfish.js, script-update-interval=0
+个人主页 = type=http-response, pattern=^https:\/\/acs\.m\.goofish\.com\/gw\/mtop\.idle\.user\.page\.my\.adapter\/, requires-body=1, max-size=0, binary-body-mode=0, script-path=https://raw.githubusercontent.com/Zhao242/ShanYangProxyApps/main/Js/xianyu.js, script-update-interval=0
 
 # 旧版首页顶部频道菜单
-旧版首页顶部频道菜单 = type=http-response, pattern=^https:\/\/acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idlehome\.home\.circle\.list\/, requires-body=1, max-size=0, binary-body-mode=0, script-path=https://raw.githubusercontent.com/kelv1n1n/script/main/js/goodfish.js, script-update-interval=0
+旧版首页顶部频道菜单 = type=http-response, pattern=^https:\/\/acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idlehome\.home\.circle\.list\/, requires-body=1, max-size=0, binary-body-mode=0, script-path=https://raw.githubusercontent.com/Zhao242/ShanYangProxyApps/main/Js/xianyu.js, script-update-interval=0
 
 [MITM]
 hostname = %APPEND% acs.m.goofish.com, g-acs.m.goofish.com, dinamicx.alibabausercontent.com
