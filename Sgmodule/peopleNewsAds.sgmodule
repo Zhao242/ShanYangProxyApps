@@ -1,7 +1,7 @@
 #!name=人民日报去广告
 #!desc=人民日报去广告及优化界面（去除视频/人民号）。作者:山羊🐐
 #!system=ios
-#!category=山羊去广告
+#!category=山羊移动端App学习
 
 [URL Rewrite]
 ^https:\/\/cdnpdadv\.aikan\.pdnews\.cn\/image\/adv - reject
