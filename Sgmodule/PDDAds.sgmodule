@@ -3,6 +3,16 @@
 #!system=ios
 #!category=山羊去广告
 
+[Rule]
+DOMAIN, titan.pinduoduo.com, reject
+DOMAIN, apm.pinduoduo.com, reject
+DOMAIN, m.pinduoduo.net, reject
+DOMAIN, ta-a.pinduoduo.com, reject
+DOMAIN, ta.pinduoduo.com, reject
+DOMAIN, th-a.pinduoduo.com, reject
+DOMAIN, th-b.pinduoduo.com, reject
+DOMAIN, th.pinduoduo.com, reject
+
 [URL Rewrite]
 ^https:\/\/api\.pinduoduo\.com\/search_hotquery - reject
 ^https:\/\/api\.pinduoduo\.com\/api\/zaire_biz\/chat\/resource\/get_list_data - reject
