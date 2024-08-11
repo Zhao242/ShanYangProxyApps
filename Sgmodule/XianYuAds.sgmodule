@@ -1,0 +1,44 @@
+#!name=闲鱼去广告
+#!desc=闲鱼APP优化处理
+#!author=山羊🐐
+#!system=ios
+#!category=山羊去广告
+
+
+[URL Rewrite]
+# 拦截广告下发
+^http:\/\/amdc\.m\.taobao\.com\/amdc\/mobileDispatch %E9%97%B2%E9%B1%BC* - reject
+# 我的页面横幅
+^https:\/\/dinamicx\.alibabausercontent\.com\/pub\/fish_home_top_kingkong_new\/ - reject
+# 消息页感兴趣推荐
+^https:\/\/acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idle\.playboy\.recommend\/ - reject
+# 商品详情页底部推荐
+^https:\/\/acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idle\.item\.recommend\.list\/ - reject
+# 搜索页多余推荐列表
+^https:\/\/acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idlemtopsearch\.item\.search\.activate\/2\.0 - reject
+^https:\/\/acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idlemtopsearch\.search\.discover\/1\.0 - reject
+
+[Script]
+# 首页顶部标签
+http-response ^https:\/\/(g-)?acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idle\.home\.whale\.modulet\/ script-path=https://github.com/fmz200/wool_scripts/raw/main/Scripts/xianyu/xianyu_ads.js, requires-body=true, timeout=60, tag=goodfish
+
+# 搜索栏填充词
+http-response ^https:\/\/(g-)?acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idlemtopsearch\.search\.shade\/ script-path=https://github.com/fmz200/wool_scripts/raw/main/Scripts/xianyu/xianyu_ads.js, requires-body=true, timeout=60, tag=goodfish
+
+# 首页闲鱼币入口、底部发布球
+http-response ^https:\/\/(g-)?acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idle\.user\.strategy\.list\/ script-path=https://github.com/fmz200/wool_scripts/raw/main/Scripts/xianyu/xianyu_ads.js, requires-body=true, timeout=60, tag=goodfish
+
+# 商品信息流广告
+http-response ^https:\/\/(g-)?acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idlehome\.home\.nextfresh\/ script-path=https://github.com/fmz200/wool_scripts/raw/main/Scripts/xianyu/xianyu_ads.js, requires-body=true, timeout=60, tag=goodfish
+
+# 定位地区页面的信息流广告
+http-response ^https:\/\/(g-)?acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idle\.local\.home\/ script-path=https://github.com/fmz200/wool_scripts/raw/main/Scripts/xianyu/xianyu_ads.js, requires-body=true, timeout=60, tag=goodfish
+
+# 个人主页
+http-response ^https:\/\/acs\.m\.goofish\.com\/gw\/mtop\.idle\.user\.page\.my\.adapter\/ script-path=https://raw.githubusercontent.com/kelv1n1n/script/main/js/goodfish.js, requires-body=true, timeout=60, tag=goodfish
+
+# 旧版首页顶部频道菜单
+http-response ^https:\/\/acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idlehome\.home\.circle\.list\/ script-path=https://raw.githubusercontent.com/kelv1n1n/script/main/js/goodfish.js, requires-body=true, timeout=60, tag=goodfish
+
+[MITM]
+hostname = %APPEND% acs.m.goofish.com,g-acs.m.goofish.com,dinamicx.alibabausercontent.com
