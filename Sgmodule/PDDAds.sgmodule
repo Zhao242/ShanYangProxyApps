@@ -78,6 +78,8 @@ IP-CIDR, 49.235.102.145/32, reject
 ^https:\/\/api\.pinduoduo\.com\/api\/caterham\/v3\/query\/likes - reject
 
 [Script]
+#> https://raw.githubusercontent.com/ZenmoFeiShi/Qx/main/Pinduoduo.js
+
 主页=type=http-response, pattern=^https:\/\/api\.pinduoduo\.com\/api\/philo\/personal\/hub, requires-body=1, max-size=0, binary-body-mode=0, script-path=https://raw.githubusercontent.com/Zhao242/ShanYangProxyApps/main/Js/Pdd.js, script-update-interval=0
 
 个人=type=http-response, pattern=^https:\/\/api\.pinduoduo\.com\/api\/alexa\/homepage\/hub, requires-body=1, max-size=0, binary-body-mode=0, script-path=https://raw.githubusercontent.com/Zhao242/ShanYangProxyApps/main/Js/Pdd.js, script-update-interval=0
