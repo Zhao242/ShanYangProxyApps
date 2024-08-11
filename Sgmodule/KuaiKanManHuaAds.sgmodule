@@ -138,8 +138,8 @@ DOMAIN-SUFFIX, jpush.io, REJECT
 # 福利中心、悬浮部件
 ^https:\/\/(cdn-)?api\.kkmh\.com\/v\d\/checkin\/task_center\/get_by_task_type - reject
 
-
 [Script]
+#> https://gitlab.com/lodepuly/vpn_tool/-/raw/master/Resource/Script/KuaiKanComic/KuaiKanComic_remove_ads.js
 # 修改广告参数
 修改广告参数 = type=http-response,pattern=^https:\/\/(cdn-)?api\.kkmh\.com\/v\d\/ironman\/comic\/recommend,requires-body=1,max-size=0,binary-body-mode=0,script-path=https://raw.githubusercontent.com/Zhao242/ShanYangProxyApps/main/Js/kuaikanAds.js,script-update-interval=0
 
