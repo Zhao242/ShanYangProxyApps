@@ -1,7 +1,7 @@
 #!name=闲鱼去广告
-#!desc=闲鱼APP优化处理,作者：山羊🐐
+#!desc=闲鱼APP去广告/多余模块,作者：山羊🐐
 #!system=ios
-#!category=山羊去广告
+#!category=山羊移动端App学习
 
 [URL Rewrite]
 # 拦截广告下发
