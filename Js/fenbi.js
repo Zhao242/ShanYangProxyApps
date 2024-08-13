@@ -1,7 +1,8 @@
 /*
  * 粉笔各首页模块优化 去除不必要滑块
- * 2024/8/12
+ * 2024/8/12 10:22 v1
  */
+
 const url = $request.url; 
 const body = $response.body; 
 let obj = JSON.parse(body); 
