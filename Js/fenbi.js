@@ -22,7 +22,7 @@ else if (url.includes('https://tiku.fenbi.com/iphone/xingce/banners/v2')) {
 }
 
 // 处理其他请求，过滤 cover 数组，只保留特定类型
-else if (url.includes('/somehttps://tiku.fenbi.com/iphone/xingce/course/module/config/v2')) {
+else if (url.includes('https://tiku.fenbi.com/iphone/xingce/course/module/config/v2')) {
     const allowedTypes = ["jam", "paper", "template","pk"];
     if (obj.cover && Array.isArray(obj.cover)) {
         obj.cover = obj.cover.filter(item => allowedTypes.includes(item.type));
