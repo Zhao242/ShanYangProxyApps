@@ -3,9 +3,9 @@
  * 2024/8/12
  */
 
-const url = $request.url; // 获取请求的 URL
-const body = $response.body; // 获取响应的 body
-let obj = JSON.parse(body); // 将 body 解析为 JSON 对象
+const url = $request.url; 
+const body = $response.body; 
+let obj = JSON.parse(body); 
 
 
 if (url.includes('https://keapi.fenbi.com/app/iphone/xingce/small_banner')) {
@@ -29,8 +29,6 @@ else if (url.includes('https://tiku.fenbi.com/iphone/xingce/course/module/config
     }
 }
 
-// 将修改后的对象转换回 JSON 字符串
 const newBody = JSON.stringify(obj);
 
-// 返回修改后的响应
 $done({body: newBody});
