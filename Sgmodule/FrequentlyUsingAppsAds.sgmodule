@@ -24,16 +24,20 @@
 ^https:\/\/market-api\.fenbi\.com\/iphone\/v1\/assistant\/info - reject
 # 首页 - 悬浮窗 - 笔面常备资料
 ^https:\/\/market-api\.fenbi\.com\/iphone\/v1\/assistant\/entrance\/show - reject
-# 首页 - 横向滚动板块
-^https:\/\/keapi\.fenbi\.com\/app\/iphone\/\w+\/small_banner - reject
+
 
 #> 公考雷达
 ^http:\/\/static\.gongkaoleida\.com\/2024\/ad - reject
 ^https:\/\/api\.gongkaoleida\.com\/api\/v2\/ad\/info - reject
 
 [Script]
-#> https://gitlab.com/lodepuly/vpn_tool/-/raw/master/Resource/Script/ColorfulClouds/ColorfulClouds_remove_ads.js
 彩云天气去广告 = type=http-response,pattern=^https:\/\/(wrapper\.cyapi\.cn|api\.caiyunapp\.com|cdn-w\.caiyunapp\.com)\/v1\/activity\?,requires-body=1,max-size=0,binary-body-mode=0,script-path=https://raw.githubusercontent.com/Zhao242/ShanYangProxyApps/main/Js/caiyunweather.js,script-update-interval=0
+
+粉笔首页小滑块去除 = type=http-response,pattern=^https:\/\/keapi\.fenbi\.com\/app\/iphone\/xingce\/small_banner,requires-body=1,max-size=0,binary-body-mode=0,script-path=https://raw.githubusercontent.com/Zhao242/ShanYangProxyApps/main/Js/fenbi.js,script-update-interval=0
+
+粉笔首页大滑块去除 = type=http-response,pattern=^https:\/\/tiku\.fenbi\.com\/iphone\/xingce\/banners\/v2,requires-body=1,max-size=0,binary-body-mode=0,script-path=https://raw.githubusercontent.com/Zhao242/ShanYangProxyApps/main/Js/fenbi.js,script-update-interval=0
+
+粉笔首页配置项去除 = type=http-response,pattern=^https:\/\/tiku\.fenbi\.com\/iphone\/xingce\/course\/module\/config\/v2,requires-body=1,max-size=0,binary-body-mode=0,script-path=https://raw.githubusercontent.com/Zhao242/ShanYangProxyApps/main/Js/fenbi.js,script-update-interval=0
 
 [MITM]
 hostname = %APPEND% *.lkcoffee.com,biz.cyapi.cn, starplucker.cyapi.cn, api.caiyunapp.com, cdn-w.caiyunapp.com,*.fenbi.com, *.gongkaoleida.com
