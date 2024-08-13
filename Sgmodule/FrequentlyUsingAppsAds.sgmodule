@@ -33,9 +33,8 @@
 [Script]
 彩云天气去广告 = type=http-response,pattern=^https:\/\/(wrapper\.cyapi\.cn|api\.caiyunapp\.com|cdn-w\.caiyunapp\.com)\/v1\/activity\?,requires-body=1,max-size=0,binary-body-mode=0,script-path=https://raw.githubusercontent.com/Zhao242/ShanYangProxyApps/main/Js/caiyunweather.js,script-update-interval=0
 
-粉笔首页小滑块去除 = type=http-response,pattern=^https:\/\/keapi\.fenbi\.com\/app\/iphone\/xingce\/small_banner,requires-body=1,max-size=0,binary-body-mode=0,script-path=https://raw.githubusercontent.com/Zhao242/ShanYangProxyApps/main/Js/fenbi.js,script-update-interval=0
-
-粉笔首页大滑块去除 = type=http-response,pattern=^https:\/\/tiku\.fenbi\.com\/iphone\/xingce\/banners\/v2,requires-body=1,max-size=0,binary-body-mode=0,script-path=https://raw.githubusercontent.com/Zhao242/ShanYangProxyApps/main/Js/fenbi.js,script-update-interval=0
+# 粉笔首页小滑块去除 = type=http-response,pattern=^https:\/\/keapi\.fenbi\.com\/app\/iphone\/xingce\/small_banner,requires-body=1,max-size=0,binary-body-mode=0,script-path=https://raw.githubusercontent.com/Zhao242/ShanYangProxyApps/main/Js/fenbi.js,script-update-interval=0
+# 粉笔首页大滑块去除 = type=http-response,pattern=^https:\/\/tiku\.fenbi\.com\/iphone\/xingce\/banners\/v2,requires-body=1,max-size=0,binary-body-mode=0,script-path=https://raw.githubusercontent.com/Zhao242/ShanYangProxyApps/main/Js/fenbi.js,script-update-interval=0
 
 粉笔首页配置项去除 = type=http-response,pattern=^https:\/\/tiku\.fenbi\.com\/iphone\/xingce\/course\/module\/config\/v2,requires-body=1,max-size=0,binary-body-mode=0,script-path=https://raw.githubusercontent.com/Zhao242/ShanYangProxyApps/main/Js/fenbi.js,script-update-interval=0
 
