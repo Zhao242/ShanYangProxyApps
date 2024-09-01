@@ -1,12 +1,9 @@
 #!name=常用简单App去广告/优化
-#!desc=中国移动/瑞幸/粉笔/雷达/彩云去广告页面优化。作者:山羊🐐
+#!desc=瑞幸/粉笔/雷达/彩云去广告页面优化。作者:山羊🐐
 #!system=ios
 #!category=山羊移动端App学习
 
 [URL Rewrite]
-#> 中国移动
-^https:\/\/client\.app\.coc\.10086\.cn\/biz-orange\/DN\/(explorePage\/getAdverList|init\/startInit) - reject
-
 #> 瑞幸咖啡
 ^https:\/\/capi\.lkcoffee\.com\/resource\/m\/eorder\/product\/popAppTagProductList\?sign - reject
 ^https:\/\/capi\.lkcoffee\.com\/resource\/m\/sys\/app\/adposNew\?sign - reject
