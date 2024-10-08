@@ -1,0 +1,14 @@
+#!name=咪咕音乐去广告
+#!desc=咪咕音乐去广告页面优化。作者:山羊🐐
+#!system=ios
+#!category=山羊移动端App学习
+
+[URL Rewrite]
+#> 开屏页广告
+^https:\/\/app\.c\.nf\.migu\.cn\/column\/startup-pic-with-ad - reject
+
+[Script]
+咪咕滚动横幅 = type=http-response,pattern=^https:\/\/app\.pd\.nf\.migu\.cn\/MIGUM3\.0\/bmw\/page-data\/index-show,requires-body=1,max-size=0,binary-body-mode=0,script-path=https://raw.githubusercontent.com/Zhao242/ShanYangProxyApps/refs/heads/main/Js/MiGuMusic.js,script-update-interval=0
+
+[MITM]
+hostname = %APPEND% app.c.nf.migu.cn,app.pd.nf.migu.cn
