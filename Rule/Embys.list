@@ -1,18 +1,23 @@
-# 不给看
+# bgk
 DOMAIN-SUFFIX,emby.pro
-
-# Peach
-DOMAIN-SUFFIX,embymv.link
-DOMAIN-SUFFIX,peachmv.me
-
-
-# Loser
-DOMAIN-SUFFIX,xmsl.org
-DOMAIN-SUFFIX,emby.moe
-
-# hxd 
-DOMAIN-SUFFIX,bili.rip
-DOMAIN,hxd.as147.com
-
-# p站
+# 守候
+DOMAIN-SUFFIX,cn2gias.uk
+# peach
+DOMAIN-KEYWORD,embymv
+#July
+DOMAIN-SUFFIX,vfing.de
+# nya
+DOMAIN-SUFFIX,bangumi.ca
+# micu
+DOMAIN,media.micu.hk
+#p站
 DOMAIN-KEYWORD,pilipili
+#Hxd
+DOMAIN-KEYWORD,as174
+#牢大
+DOMAIN-SUFFIX,mius.uk
+#loser
+DOMAIN-SUFFIX,xmsl.org
+#zdz
+DOMAIN-SUFFIX,emby.wtf
+DOMAIN-SUFFIX,term.wtf
