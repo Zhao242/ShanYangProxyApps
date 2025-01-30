@@ -1,27 +1,27 @@
+# 非跃
+DOMAIN-SUFFIX,sfcj.org,Emby
 # bgk
-DOMAIN-SUFFIX,emby.pro
+DOMAIN-SUFFIX,emby.pro,Emby
 # 守候
-DOMAIN-SUFFIX,cn2gias.uk
+DOMAIN-SUFFIX,cn2gias.uk,Emby
+# 狗服
+DOMAIN-SUFFIX,saturday.video,Emby
 # peach
-DOMAIN-KEYWORD,embymv
-#July
-DOMAIN-SUFFIX,vfing.de
+DOMAIN-KEYWORD,embymv,Emby
 # nya
-DOMAIN-SUFFIX,bangumi.ca
+DOMAIN-SUFFIX,bangumi.ca,Emby
 # micu
-DOMAIN,media.micu.hk
-#p站
-DOMAIN-KEYWORD,pilipili
-#Hxd
-DOMAIN-KEYWORD,as174
-#牢大
-DOMAIN-SUFFIX,mius.uk
-#loser
-DOMAIN-SUFFIX,xmsl.org
-#zdz
-DOMAIN-SUFFIX,emby.wtf
-DOMAIN-SUFFIX,term.wtf
-#南飞
-DOMAIN-SUFFIX,nanflix.net
-#月饼
-DOMAIN-SUFFIX,emby.my
+DOMAIN,media.micu.hk,Emby
+# p站
+DOMAIN-KEYWORD,pilipili,Emby
+# Hxd
+DOMAIN-KEYWORD,as174,Emby
+# 牢大
+DOMAIN-SUFFIX,mius.uk,Emby
+# loser
+DOMAIN-SUFFIX,xmsl.org,Emby
+# 南飞
+DOMAIN-SUFFIX,nanflix.net,Emby
+# zdz
+DOMAIN-SUFFIX,emby.wtf,Emby
+DOMAIN-SUFFIX,term.wtf,Emby
