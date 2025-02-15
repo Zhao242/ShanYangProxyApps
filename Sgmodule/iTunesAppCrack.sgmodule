@@ -1,1 +1,10 @@
+#!name=苹果部分App内购破解
+#!desc=作者:山羊🐐
+#!system=ios
+#!category=山羊移动端App学习
 
+[Script]
+iTunes破解 = type=http-response,pattern=^https:\/\/buy\.itunes\.apple\.com\/verifyReceipt$,requires-body=1,max-size=0,timeout=0,script-path=https://raw.githubusercontent.com/Zhao242/ShanYangProxyApps/refs/heads/main/Js/iTunesAppCrack.js
+
+[MITM]
+hostname = %APPEND% buy.itunes.apple.com
