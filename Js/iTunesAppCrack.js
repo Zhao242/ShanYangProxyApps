@@ -12,6 +12,9 @@ for (var key in $request.headers) {
 var UA = $request.headers['user-agent'];
 var uaProductMapping = {
   'ChickAlarmClock': {product_id: 'Pro_M01'},
+  'Picsew': {product_id: 'com.sugarmo.ScrollClip.pro',bundle_id: 'com.sugarmo.ScrollClip'},
+  '%E7%86%8A%E6%8E%8C%E8%AE%B0': {product_id: 'net.shinyfrog.bear_iOS.pro_yearly_subscription_bis'},
+
 };
 var receipt = {
   "quantity": "1",
