@@ -2,8 +2,6 @@
 DOMAIN-SUFFIX,lyrebirdemby.com
 # 月饼
 DOMAIN-SUFFIX,emby.my
-# July
-DOMAIN-SUFFIX,vfing.de
 # 非跃
 DOMAIN-SUFFIX,sfcj.org
 # bgk
@@ -14,20 +12,16 @@ DOMAIN-SUFFIX,cn2gias.uk
 DOMAIN-SUFFIX,saturday.video
 # peach
 DOMAIN-KEYWORD,embymv
-# nya
-DOMAIN-SUFFIX,bangumi.ca
 # micu
 DOMAIN,media.micu.hk
 # p站
-DOMAIN-KEYWORD,pilipili
+DOMAIN-KEYWORD,pilipiliultra
 # Hxd
 DOMAIN-KEYWORD,as174
 # 牢大
-DOMAIN-SUFFIX,mius.uk
+DOMAIN-SUFFIX,biliblili.uk
 # loser
 DOMAIN-SUFFIX,xmsl.org
-# 南飞
-DOMAIN-SUFFIX,nanflix.net
 # zdz
 DOMAIN-SUFFIX,emby.wtf
 DOMAIN-SUFFIX,term.wtf
