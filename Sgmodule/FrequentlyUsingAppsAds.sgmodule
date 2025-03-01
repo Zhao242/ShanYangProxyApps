@@ -1,5 +1,5 @@
-#!name=常用简单App去广告/优化
-#!desc=瑞幸/粉笔/雷达/彩云去广告页面优化。作者:山羊🐐
+#!name=常用App去广告
+#!desc=瑞幸/粉笔/雷达/智慧房东去广告页面优化，Safari重定向。作者:山羊🐐
 #!system=ios
 #!category=山羊移动端App学习
 
@@ -7,10 +7,6 @@
 #> 瑞幸咖啡
 ^https:\/\/capi\.lkcoffee\.com\/resource\/m\/eorder\/product\/popAppTagProductList\?sign - reject
 ^https:\/\/capi\.lkcoffee\.com\/resource\/m\/sys\/app\/adposNew\?sign - reject
-
-#> 彩云
-^https:\/\/biz\.cyapi\.cn\/(p\/v1\/entries|p\/v1\/trial_card\/info|v2\/product) - reject
-^https:\/\/starplucker\.cyapi\.cn\/v3\/(config\/cypage\/\w+\/conditions|notification\/message_center|operation\/homefeatures) - reject
 
 #> 粉笔
 # 开屏广告
@@ -21,21 +17,19 @@
 ^https:\/\/market-api\.fenbi\.com\/iphone\/v1\/assistant\/info - reject
 # 首页 - 悬浮窗 - 笔面常备资料
 ^https:\/\/market-api\.fenbi\.com\/iphone\/v1\/assistant\/entrance\/show - reject
-# 滑块删除
-^https:\/\/tiku\.fenbi\.com\/iphone\/xingce\/banners\/v2 - reject
-^https:\/\/keapi\.fenbi\.com\/app\/iphone\/xingce\/small_banner - reject
 
 #> 公考雷达
 ^http:\/\/static\.gongkaoleida\.com\/2024\/ad - reject
 ^https:\/\/api\.gongkaoleida\.com\/api\/v2\/ad\/info - reject
 
-[Script]
-彩云天气去广告 = type=http-response,pattern=^https:\/\/(wrapper\.cyapi\.cn|api\.caiyunapp\.com|cdn-w\.caiyunapp\.com)\/v1\/activity\?,requires-body=1,max-size=0,binary-body-mode=0,script-path=https://raw.githubusercontent.com/Zhao242/ShanYangProxyApps/main/Js/caiyunweather.js,script-update-interval=0
+# safari 重定向
+^https:\/\/duckduckgo\.com\/\?q=([^&]+).+ https://www.google.com/search?q=$1 307
 
-# 粉笔首页小滑块去除 = type=http-response,pattern=^https:\/\/keapi\.fenbi\.com\/app\/iphone\/xingce\/small_banner,requires-body=1,max-size=0,binary-body-mode=0,script-path=https://raw.githubusercontent.com/Zhao242/ShanYangProxyApps/main/Js/fenbi.js,script-update-interval=0
-# 粉笔首页大滑块去除 = type=http-response,pattern=^https:\/\/tiku\.fenbi\.com\/iphone\/xingce\/banners\/v2,requires-body=1,max-size=0,binary-body-mode=0,script-path=https://raw.githubusercontent.com/Zhao242/ShanYangProxyApps/main/Js/fenbi.js,script-update-interval=0
+# 智慧房东
+^https:\/\/api\.zhihuifangdong\.net\/core\/app\/activity\/clickPicMore - reject
+^https:\/\/api\.zhihuifangdong\.net\/core\/app\/activity\/bannerPicMore - reject
+^https:\/\/api\.zhihuifangdong\.net\/core\/app\/activity\/appOpenAds - reject
 
-粉笔首页配置项去除 = type=http-response,pattern=^https:\/\/tiku\.fenbi\.com\/iphone\/xingce\/course\/module\/config\/v2,requires-body=1,max-size=0,binary-body-mode=0,script-path=https://raw.githubusercontent.com/Zhao242/ShanYangProxyApps/main/Js/fenbi.js,script-update-interval=0
 
 [MITM]
-hostname = %APPEND% *.lkcoffee.com,biz.cyapi.cn, starplucker.cyapi.cn, api.caiyunapp.com, cdn-w.caiyunapp.com,*.fenbi.com, *.gongkaoleida.com
+hostname = %APPEND% *.lkcoffee.com,*.fenbi.com, *.gongkaoleida.com,duckduckgo.com, *.zhihuifangdong.net
