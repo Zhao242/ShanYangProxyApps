@@ -1,11 +1,10 @@
 # 琴鸟
 DOMAIN-SUFFIX,lyrebirdemby.com
+IP-CIDR,188.172.228.65/32
 # 月饼
 DOMAIN-SUFFIX,emby.my
 # 非跃
 DOMAIN-SUFFIX,sfcj.org
-# bgk
-DOMAIN-SUFFIX,emby.pro
 # 守候
 DOMAIN-SUFFIX,cn2gias.uk
 # peach
@@ -16,8 +15,6 @@ DOMAIN,media.micu.hk
 DOMAIN-KEYWORD,pilipiliultra
 # Hxd
 DOMAIN-KEYWORD,as174
-# 牢大
-DOMAIN-SUFFIX,biliblili.uk
 # loser
 DOMAIN-SUFFIX,xmsl.org
 # zdz
