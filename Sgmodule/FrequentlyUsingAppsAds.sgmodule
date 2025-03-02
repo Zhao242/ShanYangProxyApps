@@ -24,6 +24,12 @@
 
 # safari 重定向
 ^https:\/\/duckduckgo\.com\/\?q=([^&]+).+ https://www.google.com/search?q=$1 307
+# Safari google重定向
+^https?://(www.)?g.cn https://www.google.com 302
+^https?://(www.)?google.cn https://www.google.com 302
+
+
+
 
 # 智慧房东
 ^https:\/\/api\.zhihuifangdong\.net\/core\/app\/activity\/clickPicMore - reject
@@ -32,4 +38,4 @@
 
 
 [MITM]
-hostname = %APPEND% *.lkcoffee.com,*.fenbi.com, *.gongkaoleida.com,duckduckgo.com, *.zhihuifangdong.net
+hostname = %APPEND% *.lkcoffee.com,*.fenbi.com, *.gongkaoleida.com,duckduckgo.com, *.zhihuifangdong.net,www.google.cn, www.g.cn
