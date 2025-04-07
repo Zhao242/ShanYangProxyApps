@@ -27,4 +27,4 @@
 ^https?://(www.)?google.cn https://www.google.com 302
 
 [MITM]
-hostname = %APPEND% *.lkcoffee.com,*.fenbi.com, *.gongkaoleida.com,duckduckgo.com, ,www.google.cn, www.g.cn
+hostname = %APPEND% *.lkcoffee.com,*.fenbi.com, *.gongkaoleida.com,duckduckgo.com,www.google.cn, www.g.cn
