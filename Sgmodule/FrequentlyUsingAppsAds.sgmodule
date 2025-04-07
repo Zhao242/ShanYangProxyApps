@@ -1,5 +1,5 @@
 #!name=常用App去广告
-#!desc=瑞幸/粉笔/雷达/智慧房东去广告页面优化，Safari重定向。作者:山羊🐐
+#!desc=瑞幸/粉笔/雷达去广告页面优化，Safari重定向。作者:山羊🐐
 #!system=ios
 #!category=山羊移动端App学习
 
@@ -22,20 +22,9 @@
 ^http:\/\/static\.gongkaoleida\.com\/2024\/ad - reject
 ^https:\/\/api\.gongkaoleida\.com\/api\/v2\/ad\/info - reject
 
-# safari 重定向
-^https:\/\/duckduckgo\.com\/\?q=([^&]+).+ https://www.google.com/search?q=$1 307
 # Safari google重定向
 ^https?://(www.)?g.cn https://www.google.com 302
 ^https?://(www.)?google.cn https://www.google.com 302
 
-
-
-
-# 智慧房东
-^https:\/\/api\.zhihuifangdong\.net\/core\/app\/activity\/clickPicMore - reject
-^https:\/\/api\.zhihuifangdong\.net\/core\/app\/activity\/bannerPicMore - reject
-^https:\/\/api\.zhihuifangdong\.net\/core\/app\/activity\/appOpenAds - reject
-
-
 [MITM]
-hostname = %APPEND% *.lkcoffee.com,*.fenbi.com, *.gongkaoleida.com,duckduckgo.com, *.zhihuifangdong.net,www.google.cn, www.g.cn
+hostname = %APPEND% *.lkcoffee.com,*.fenbi.com, *.gongkaoleida.com,duckduckgo.com, ,www.google.cn, www.g.cn
