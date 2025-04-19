@@ -1,0 +1,37 @@
+#!name= 常用app去广告
+#!desc= 对常用app去除广告 每个都不需单独开一个插件
+#!author= ShanYangAndXiangJun
+#!icon= https://gitlab.com/lodepuly/iconlibrary/-/raw/main/Other_icon/120px/AppStore.png
+#!tag = 去广告
+
+
+[rewrite]
+#> 人民日报
+^https:\/\/cdnpdadv\.aikan\.pdnews\.cn\/image\/adv reject-dict
+^https:\/\/cdnjdphoto\.aikan\.pdnews\.cn\/image\/activity reject-dict
+^https:\/\/cdnjdphoto\.aikan\.pdnews\.cn\/sjbj-20240731\/image\/display reject-dict
+
+#> 瑞幸
+^https:\/\/capi\.lkcoffee\.com\/resource\/m\/eorder\/product\/popAppTagProductList\?sign reject-dict
+^https:\/\/capi\.lkcoffee\.com\/resource\/m\/sys\/app\/adposNew\?sign reject-dict
+
+#> 公考雷达
+^http:\/\/static\.gongkaoleida\.com\/2024\/ad reject-dict
+^https:\/\/api\.gongkaoleida\.com\/api\/v2\/ad\/info reject-dict
+
+#> 谷歌重定向
+^https?://(www\.)?g.cn$ https://www.google.com 302
+^https?://(www\.)?google.cn$ https://www.google.com 302
+
+[script]
+#> 人民日报
+http-response ^https:\/\/pdapis\.pdnews\.cn\/api\/rmrb-bff-display-zh\/display\/zh\/c\/pageInfo\/v2 script-path=https://raw.githubusercontent.com/Zhao242/ShanYangProxyApps/main/Js/PeopleNewButton.js, requires-body=true, timeout=60, tag=人民日报去除广告页列表
+http-response ^https:\/\/pdapis\.pdnews\.cn\/api\/rmrb-bff-display-zh\/display\/zh\/c\/bottomNavGroup script-path=https://raw.githubusercontent.com/Zhao242/ShanYangProxyApps/main/Js/PeopleNewButton.js, requires-body=true, timeout=60, tag=人民日报去除按钮
+
+#> 粉笔
+http-response ^https:\/\/keapi\.fenbi\.com\/app\/iphone\/xingce\/small_banner script-path=https://raw.githubusercontent.com/Zhao242/ShanYangProxyApps/main/Js/fenbi.js, requires-body=true, timeout=60, tag=粉笔首页小滑块去除
+http-response ^https:\/\/tiku\.fenbi\.com\/iphone\/xingce\/banners\/v2 script-path=https://raw.githubusercontent.com/Zhao242/ShanYangProxyApps/main/Js/fenbi.js, requires-body=true, timeout=60, tag=粉笔首页大滑块去除
+http-response ^https:\/\/tiku\.fenbi\.com\/iphone\/xingce\/course\/module\/config\/v2 script-path=https://raw.githubusercontent.com/Zhao242/ShanYangProxyApps/main/Js/fenbi.js, requires-body=true, timeout=60, tag=粉笔首页配置项去除
+
+[mitm]
+hostname = pdapis.pdnews.cn,*.aikan.pdnews.cn,*.lkcoffee.com,*.gongkaoleida.com,www.google.cn, www.g.cn

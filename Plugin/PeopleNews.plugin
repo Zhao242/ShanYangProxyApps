@@ -1,0 +1,20 @@
+#!name= 人民日报Ads
+#!desc= 剔除广告和没用的底栏模块
+#!author= ShanYang
+#!tag = 去广告
+
+
+[rewrite]
+#> 人民日报
+^https:\/\/cdnpdadv\.aikan\.pdnews\.cn\/image\/adv reject-dict
+^https:\/\/cdnjdphoto\.aikan\.pdnews\.cn\/image\/activity reject-dict
+^https:\/\/cdnjdphoto\.aikan\.pdnews\.cn\/sjbj-20240731\/image\/display reject-dict
+
+[script]
+#> 人民日报
+http-response ^https:\/\/pdapis\.pdnews\.cn\/api\/rmrb-bff-display-zh\/display\/zh\/c\/pageInfo\/v2 script-path=https://raw.githubusercontent.com/Zhao242/ShanYangProxyApps/main/Js/PeopleNewButton.js, requires-body=true, timeout=60, tag=人民日报去除广告页列表
+http-response ^https:\/\/pdapis\.pdnews\.cn\/api\/rmrb-bff-display-zh\/display\/zh\/c\/bottomNavGroup script-path=https://raw.githubusercontent.com/Zhao242/ShanYangProxyApps/main/Js/PeopleNewButton.js, requires-body=true, timeout=60, tag=人民日报去除按钮
+
+
+[mitm]
+hostname = pdapis.pdnews.cn,*.aikan.pdnews.cn

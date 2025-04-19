@@ -1,0 +1,10 @@
+#!name= 苹果部分App内购破解
+#!desc= 作者:山羊🐐
+#!tag= 内购破解
+
+[script]
+#> iTunes 内购破解
+http-response ^https:\/\/buy\.itunes\.apple\.com\/verifyReceipt$ script-path=https://raw.githubusercontent.com/Zhao242/ShanYangProxyApps/refs/heads/main/Js/iTunesAppCrack.js, requires-body=true, timeout=60, tag=iTunes内购破解
+
+[mitm]
+hostname = buy.itunes.apple.com
