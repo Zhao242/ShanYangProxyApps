@@ -20,9 +20,8 @@
 ^https:\/\/api\.gongkaoleida\.com\/api\/v2\/ad\/info reject-dict
 
 #> 谷歌重定向
-^https?://(www\.)?g.cn$ https://www.google.com 302
-^https?://(www\.)?google.cn$ https://www.google.com 302
-
+^https?:\/\/(www.)?(g|google)\.cn 307 https://www.google.com
+^https?:\/\/(ditu|maps).google\.cn 307 https://maps.google.com
 [script]
 #> 人民日报
 http-response ^https:\/\/pdapis\.pdnews\.cn\/api\/rmrb-bff-display-zh\/display\/zh\/c\/pageInfo\/v2 script-path=https://raw.githubusercontent.com/Zhao242/ShanYangProxyApps/main/Js/PeopleNewButton.js, requires-body=true, timeout=60, tag=人民日报去除广告页列表
