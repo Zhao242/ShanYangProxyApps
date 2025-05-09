@@ -1,7 +1,8 @@
+# Url内容替换成订阅连接 
 proxy-providers:
   shanyang:
     type: http
-    url: "http://127.0.0.1:38324/download/collection/WinAll?target=ClashMeta"
+    url: "http://XXXXXXXXXXXXXX"
 interval: 86400
 path: "./shanyang.yaml"
 health-check:
