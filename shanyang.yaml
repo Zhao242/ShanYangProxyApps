@@ -1,7 +1,8 @@
+#山羊自用配置
 proxy-providers:
   shanyang:
     type: http
-    url: "http://127.0.0.1:38324/download/collection/WinAll?target=ClashMeta"
+    url: "XXXXXXXXXXXXXXXXXXXXXXX"
 interval: 86400
 path: "./shanyang.yaml"
 health-check:
