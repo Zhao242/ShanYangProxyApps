@@ -1,0 +1,15 @@
+#!name= 腾讯视频去广告
+#!desc= 来源于kiss 搬运
+#!tag = 去广告
+
+[rule]
+IP-CIDR,47.110.187.87/32,REJECT,no-resolve
+DOMAIN,pgdt.gtimg.cn,REJECT
+USER-AGENT,live4iphoneRel*,REJECT
+
+[rewrite]
+# 拦截阿里广告上传请求
+^https:\/\/ossgw\.alicdn\.com\/creatives-assets/prod/feupload/user reject
+
+[Mitm]
+hostname = ossgw.alicdn.com
