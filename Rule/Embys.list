@@ -3,10 +3,6 @@ DOMAIN-SUFFIX,lyrebirdemby.com
 IP-CIDR,188.172.228.65/32
 # 月饼
 DOMAIN-SUFFIX,emby.my
-# 非跃
-DOMAIN-SUFFIX,sfcj.org
-# 守候
-DOMAIN-SUFFIX,cn2gias.uk
 # peach
 DOMAIN-KEYWORD,embymv
 # p站
@@ -15,6 +11,11 @@ DOMAIN-KEYWORD,pilipiliultra
 DOMAIN-KEYWORD,as174
 # loser
 DOMAIN-SUFFIX,xmsl.org
-# zdz
-DOMAIN-SUFFIX,emby.wtf
-DOMAIN-SUFFIX,term.wtf
+
+DOMAIN,hxd.219510.xyz
+DOMAIN,loser.219510.xyz
+DOMAIN,pilipili.219510.xyz
+DOMAIN,emby.219510.xyz
+DOMAIN,lyrebird.219510.xyz
+DOMAIN,peach.219510.xyz
+
