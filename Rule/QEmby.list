@@ -1,0 +1,20 @@
+# 琴鸟
+HOST-SUFFIX,lyrebirdemby.com
+IP-CIDR,188.172.228.65/32
+# 月饼
+HOST-SUFFIX,emby.my
+# peach
+HOST-KEYWORD,embymv
+# p站
+HOST-KEYWORD,pilipiliultra
+# Hxd
+HOST-KEYWORD,as174
+# loser
+HOST-SUFFIX,xmsl.org
+
+HOST,hxd.219510.xyz
+HOST,loser.219510.xyz
+HOST,pilipili.219510.xyz
+HOST,emby.219510.xyz
+HOST,lyrebird.219510.xyz
+HOST,peach.219510.xyz
