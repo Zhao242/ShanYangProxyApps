@@ -432,7 +432,28 @@ if [[ -n "$ipv6" ]]; then
     echo "  vless://${reality_uuid}@[${ipv6}]:${reality_port}?encryption=none&flow=xtls-rprx-vision&security=reality&sni=${reality_sni}&fp=chrome&pbk=${reality_public_key}&sid=${reality_short_id}&type=tcp&headerType=none#${name_prefix}-Reality-v6"
 fi
 echo -e "\n${YELLOW}以上链接已保存至 ${LINKS_FILE}${NC}"
-echo -e "${YELLOW}请妥善保管 SS 密钥 / Reality private_key / public_key / short_id / UUID${NC}"
+
+# 保存所有原始字段，方便备份/恢复
+SECRETS_FILE="${CONFIG_DIR}/secrets.txt"
+sudo tee "${SECRETS_FILE}" > /dev/null <<EOF
+# sing-box secrets — generated $(date -Iseconds)
+# 备份此文件即可保留全部连接所需字段（含 public_key）
+SS_METHOD=${SS_METHOD}
+SS_PORT=${ss_port}
+SS_PASSWORD=${ss_password}
+REALITY_PORT=${reality_port}
+REALITY_UUID=${reality_uuid}
+REALITY_PRIVATE_KEY=${reality_private_key}
+REALITY_PUBLIC_KEY=${reality_public_key}
+REALITY_SHORT_ID=${reality_short_id}
+REALITY_SNI=${reality_sni}
+NAME_PREFIX=${name_prefix}
+EOF
+sudo chown root:root "${SECRETS_FILE}"
+sudo chmod 600 "${SECRETS_FILE}"
+
+echo -e "${YELLOW}原始凭据已保存至 ${SECRETS_FILE} (root 600)${NC}"
+echo -e "${YELLOW}备份命令: sudo tar czf singbox-backup.tar.gz -C /etc sing-box/${NC}"
 
 # ---------- 9. 自删除安装脚本 ----------
 SCRIPT_PATH=$(readlink -f "$0" 2>/dev/null || echo "$0")
