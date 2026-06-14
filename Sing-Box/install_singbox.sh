@@ -1,6 +1,6 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -o pipefail
 
-# 定义颜色
 CYAN='\033[0;36m'
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -9,276 +9,332 @@ NC='\033[0m'
 
 CONFIG_DIR="/etc/sing-box"
 CONFIG_PATH="${CONFIG_DIR}/config.json"
+DATA_DIR="/var/lib/sing-box"
+SERVICE_NAME="sing-box"
 
-MODE=""
+OS_FAMILY=""
+SERVICE_MANAGER=""
 
-# ---------- 1. 安装 sing-box 稳定版 ----------
-setup_repo() {
-    echo -e "${CYAN}添加 sing-box 官方仓库...${NC}"
-    sudo mkdir -p /etc/apt/keyrings
-    sudo curl -fsSL https://sing-box.app/gpg.key -o /etc/apt/keyrings/sagernet.asc
-    sudo chmod a+r /etc/apt/keyrings/sagernet.asc
-    echo "Types: deb
+SS_PORT_DEFAULT="21958"
+REALITY_PORT_DEFAULT="21959"
+UUID_DEFAULT="4bd7d2f4-9f01-4596-b4d3-326d2f0b27e5"
+NODE_NAME_DEFAULT="ShanYang"
+SS_METHOD_DEFAULT="2022-blake3-aes-128-gcm"
+
+info() { echo -e "${CYAN}$*${NC}"; }
+warn() { echo -e "${YELLOW}$*${NC}"; }
+success() { echo -e "${GREEN}$*${NC}"; }
+error() { echo -e "${RED}$*${NC}" >&2; }
+
+command_exists() {
+    command -v "$1" >/dev/null 2>&1
+}
+
+run_as_root() {
+    if [[ "$(id -u)" -eq 0 ]]; then
+        "$@"
+    elif command_exists sudo; then
+        sudo "$@"
+    else
+        error "当前不是 root，且系统未安装 sudo，请使用 root 运行此脚本"
+        exit 1
+    fi
+}
+
+detect_os() {
+    local id="" id_like="" pretty_name=""
+
+    if [[ -r /etc/os-release ]]; then
+        # shellcheck disable=SC1091
+        source /etc/os-release
+        id="${ID:-}"
+        id_like="${ID_LIKE:-}"
+        pretty_name="${PRETTY_NAME:-}"
+    fi
+
+    local os_text="${id} ${id_like}"
+    case "$os_text" in
+        *alpine*)
+            OS_FAMILY="alpine"
+            ;;
+        *debian*|*ubuntu*)
+            OS_FAMILY="debian"
+            ;;
+        *)
+            if command_exists apk; then
+                OS_FAMILY="alpine"
+            elif command_exists apt-get; then
+                OS_FAMILY="debian"
+            else
+                error "暂不支持当前系统：${pretty_name:-unknown}"
+                exit 1
+            fi
+            ;;
+    esac
+}
+
+detect_service_manager() {
+    if command_exists systemctl && [[ -d /run/systemd/system ]]; then
+        SERVICE_MANAGER="systemd"
+    elif command_exists rc-service && command_exists rc-update; then
+        SERVICE_MANAGER="openrc"
+    else
+        SERVICE_MANAGER="none"
+    fi
+}
+
+install_base_tools_debian() {
+    run_as_root apt-get update -qq >/dev/null 2>&1
+    run_as_root apt-get install -yq ca-certificates curl openssl >/dev/null 2>&1
+}
+
+install_base_tools_alpine() {
+    run_as_root apk update >/dev/null
+    run_as_root apk add --no-cache ca-certificates curl openssl shadow >/dev/null
+}
+
+install_sing_box_debian() {
+    install_base_tools_debian
+
+    info "添加 sing-box 官方 APT 仓库..."
+    run_as_root mkdir -p /etc/apt/keyrings
+    run_as_root curl -fsSL https://sing-box.app/gpg.key -o /etc/apt/keyrings/sagernet.asc
+    run_as_root chmod a+r /etc/apt/keyrings/sagernet.asc
+    run_as_root tee /etc/apt/sources.list.d/sagernet.sources >/dev/null <<EOF
+Types: deb
 URIs: https://deb.sagernet.org/
 Suites: *
 Components: *
 Enabled: yes
 Signed-By: /etc/apt/keyrings/sagernet.asc
-" | sudo tee /etc/apt/sources.list.d/sagernet.sources > /dev/null
+EOF
 
     echo "正在更新包列表，请稍候..."
-    sudo apt-get update -qq > /dev/null 2>&1
+    run_as_root apt-get update -qq >/dev/null 2>&1
+
+    echo "正在安装 sing-box 稳定版..."
+    run_as_root apt-get install -yq sing-box >/dev/null 2>&1
 }
 
-install_action="install"
-if command -v sing-box &> /dev/null; then
-    current_version=$(sing-box version | grep 'sing-box version' | awk '{print $3}')
-    echo -e "${CYAN}检测到已安装 sing-box，当前版本: ${current_version}${NC}"
-    while true; do
-        read -rp "请选择操作 (1=升级到最新稳定版 / 2=跳过安装 / q=退出): " choice
-        case "$choice" in
-            1) install_action="upgrade"; break ;;
-            2) install_action="skip"; break ;;
-            q|Q) echo "已退出"; exit 0 ;;
-            *) echo -e "${RED}无效输入${NC}" ;;
-        esac
-    done
-fi
+install_sing_box_alpine() {
+    install_base_tools_alpine
 
-case "$install_action" in
-    install)
-        setup_repo
-        echo "正在安装 sing-box 稳定版..."
-        sudo apt-get install sing-box -yq > /dev/null 2>&1
-        ;;
-    upgrade)
-        setup_repo
-        echo "正在升级 sing-box 到最新稳定版..."
-        sudo apt-get install --only-upgrade sing-box -yq > /dev/null 2>&1
-        ;;
-    skip)
-        echo "跳过安装步骤"
-        ;;
-esac
+    info "使用 APK 安装 sing-box..."
+    if run_as_root apk add --no-cache sing-box; then
+        return
+    fi
 
-if command -v sing-box &> /dev/null; then
-    sing_box_version=$(sing-box version | grep 'sing-box version' | awk '{print $3}')
-    echo -e "${GREEN}sing-box 可用，版本：${NC} $sing_box_version"
-else
-    echo -e "${RED}sing-box 不可用，请检查日志或网络配置${NC}"
-    exit 1
-fi
-
-# ---------- 2. 创建用户与目录 ----------
-if ! id sing-box &>/dev/null; then
-    echo "正在创建 sing-box 系统用户..."
-    sudo useradd --system --no-create-home --shell /usr/sbin/nologin sing-box
-fi
-
-sudo mkdir -p /var/lib/sing-box "${CONFIG_DIR}"
-
-# ---------- 3. 收集用户输入 ----------
-# 输入指令: b=返回上一项 / r=重头开始 / q=放弃配置退出
-HOSTNAME_VAL=$(hostname)
-SS_METHOD="2022-blake3-aes-128-gcm"
-
-PROMPTS=(
-    "SS 监听端口"
-    "SS 密钥 (${SS_METHOD}, base64 16字节)"
-    "Reality 监听端口"
-    "Reality UUID"
-    "Reality private_key"
-    "Reality short_id"
-    "Reality SNI 域名 (TLS 伪装域名，必填)"
-    "节点名前缀"
-)
-LABELS=(
-    "SS 端口"
-    "SS 密钥"
-    "Reality 端口"
-    "Reality UUID"
-    "Reality private_key"
-    "Reality short_id"
-    "Reality SNI"
-    "节点名前缀"
-)
-# 回车时的处理: 字面值 / <auto>=自动生成 / <required>=必填
-DEFAULTS=(
-    "21958"
-    "<auto>"
-    "21959"
-    "<auto>"
-    "<auto>"
-    "<auto>"
-    "<required>"
-    "${HOSTNAME_VAL}"
-)
-
-# 显示用的提示后缀
-hint_for() {
-    case "${DEFAULTS[$1]}" in
-        "<auto>")     printf " [回车自动生成]" ;;
-        "<required>") printf " [必填]" ;;
-        *)            printf " [回车默认: %s]" "${DEFAULTS[$1]}" ;;
-    esac
+    warn "默认 Alpine 仓库未找到 sing-box，尝试 Alpine edge/testing 仓库..."
+    run_as_root apk add --no-cache \
+        --repository=https://dl-cdn.alpinelinux.org/alpine/edge/testing \
+        sing-box
 }
 
-collect_inputs() {
-    VALUES=("" "" "" "" "" "" "" "")
-    local i=0
-    local total=${#PROMPTS[@]}
-    echo -e "\n${CYAN}=== 请输入节点配置参数 ===${NC}"
-    echo -e "${YELLOW}提示: 输入 b 返回上一项, r 重头开始, q 放弃并退出${NC}\n"
-    while [[ $i -lt $total ]]; do
-        local current="${VALUES[$i]}"
-        local hint
-        if [[ -n "$current" ]]; then
-            hint=" [当前: ${current}，回车保留]"
-        else
-            hint=$(hint_for $i)
-        fi
-        read -rp "[$((i+1))/${total}] ${PROMPTS[$i]}${hint}: " ans
-        case "$ans" in
-            b|B)
-                if [[ $i -eq 0 ]]; then
-                    echo -e "${YELLOW}已是第一项，无法返回${NC}"
-                else
-                    i=$((i-1))
-                fi
+install_sing_box() {
+    if command_exists sing-box; then
+        local current_version
+        current_version="$(sing-box version 2>/dev/null | awk '/sing-box version/ {print $3; exit}')"
+        echo "检测到已安装 sing-box，当前版本: ${current_version:-unknown}"
+        read -rp "请选择操作 (1=升级到最新稳定版 / 2=跳过安装 / q=退出): " install_choice
+        case "$install_choice" in
+            1)
                 ;;
-            r|R)
-                echo -e "${YELLOW}已重置，从头开始${NC}"
-                VALUES=("" "" "" "" "" "" "" "")
-                i=0
+            2)
+                echo "跳过安装步骤"
                 ;;
             q|Q)
-                echo -e "${RED}已放弃配置，退出${NC}"
-                exit 1
-                ;;
-            "")
-                if [[ -n "$current" ]]; then
-                    i=$((i+1))
-                else
-                    case "${DEFAULTS[$i]}" in
-                        "<required>")
-                            echo -e "${RED}此项必填，不能为空${NC}"
-                            ;;
-                        *)
-                            VALUES[$i]="${DEFAULTS[$i]}"
-                            i=$((i+1))
-                            ;;
-                    esac
-                fi
+                echo "已退出"
+                exit 0
                 ;;
             *)
-                VALUES[$i]="$ans"
-                i=$((i+1))
+                warn "输入无效，默认跳过安装步骤"
                 ;;
         esac
-    done
+
+        if [[ "${install_choice:-2}" != "1" ]]; then
+            return
+        fi
+    fi
+
+    case "$OS_FAMILY" in
+        debian)
+            install_sing_box_debian
+            ;;
+        alpine)
+            install_sing_box_alpine
+            ;;
+        *)
+            error "暂不支持当前系统：${OS_FAMILY}"
+            exit 1
+            ;;
+    esac
 }
 
-echo -e "\n${CYAN}=== 请选择配置模式 ===${NC}"
-echo "  1) 自定义模式  - 逐项填写端口/密钥/UUID/SNI/节点名 (共 8 项)"
-echo "  2) 全自动模式  - 仅输入 SNI，其余全部默认值或自动生成"
-while true; do
-    read -rp "请选择 [1/2]: " mode_choice
-    case "$mode_choice" in
-        1) MODE="full"; break ;;
-        2) MODE="quick"; break ;;
-        *) echo -e "${RED}无效输入，请输入 1 或 2${NC}" ;;
+ensure_sing_box_available() {
+    if ! command_exists sing-box; then
+        error "sing-box 不可用，请检查安装日志或网络配置"
+        exit 1
+    fi
+
+    local version
+    version="$(sing-box version 2>/dev/null | awk '/sing-box version/ {print $3; exit}')"
+    success "sing-box 可用，版本： ${version:-unknown}"
+}
+
+ensure_sing_box_user() {
+    if id sing-box >/dev/null 2>&1; then
+        return
+    fi
+
+    echo "正在创建 sing-box 系统用户..."
+
+    if command_exists useradd; then
+        local nologin="/usr/sbin/nologin"
+        [[ -x "$nologin" ]] || nologin="/sbin/nologin"
+        run_as_root useradd --system --no-create-home --user-group --shell "$nologin" sing-box
+    elif command_exists adduser && command_exists addgroup; then
+        run_as_root addgroup -S sing-box 2>/dev/null || true
+        run_as_root adduser -S -D -H -h "$DATA_DIR" -s /sbin/nologin -G sing-box sing-box
+    else
+        error "未找到 useradd 或 adduser，无法创建 sing-box 用户"
+        exit 1
+    fi
+
+    if ! id sing-box >/dev/null 2>&1; then
+        error "sing-box 用户创建失败"
+        exit 1
+    fi
+}
+
+generate_ss_password() {
+    if command_exists openssl; then
+        openssl rand -base64 16
+    else
+        head -c 16 /dev/urandom | base64
+    fi
+}
+
+generate_uuid() {
+    if command_exists uuidgen; then
+        uuidgen | tr 'A-Z' 'a-z'
+    elif [[ -r /proc/sys/kernel/random/uuid ]]; then
+        cat /proc/sys/kernel/random/uuid
+    else
+        sing-box generate uuid
+    fi
+}
+
+generate_short_id() {
+    if command_exists openssl; then
+        openssl rand -hex 8
+    else
+        head -c 8 /dev/urandom | od -An -tx1 | tr -d ' \n'
+    fi
+}
+
+generate_reality_keypair() {
+    local output
+    output="$(sing-box generate reality-keypair 2>/dev/null || true)"
+    reality_private_key="$(echo "$output" | awk -F': ' '/PrivateKey/ {print $2; exit}')"
+    reality_public_key="$(echo "$output" | awk -F': ' '/PublicKey/ {print $2; exit}')"
+
+    if [[ -z "$reality_private_key" || -z "$reality_public_key" ]]; then
+        error "Reality 密钥对生成失败，请确认 sing-box 版本支持 'generate reality-keypair'"
+        exit 1
+    fi
+}
+
+read_required() {
+    local prompt="$1"
+    local value=""
+    while [[ -z "$value" ]]; do
+        read -rp "$prompt: " value
+        [[ -n "$value" ]] || error "不能为空"
+    done
+    printf '%s' "$value"
+}
+
+collect_custom_config() {
+    echo
+    info "=== 自定义模式 ==="
+
+    ss_port="$(read_required "请输入 Shadowsocks 端口")"
+    ss_password="$(read_required "请输入 Shadowsocks 密钥 (${SS_METHOD_DEFAULT}，需 base64，16 字节)")"
+    reality_port="$(read_required "请输入 Reality 端口")"
+    uuid="$(read_required "请输入 Reality UUID")"
+    reality_private_key="$(read_required "请输入 Reality private_key")"
+    reality_short_id="$(read_required "请输入 Reality short_id")"
+    reality_sni="$(read_required "请输入 Reality SNI 域名 (TLS 伪装域名)")"
+    node_name="$(read_required "请输入节点名")"
+}
+
+collect_auto_config() {
+    echo
+    info "=== 全自动模式 ==="
+    echo "除 SNI 外，其余字段使用默认值或自动生成"
+    echo
+
+    reality_sni="$(read_required "请输入 Reality SNI 域名 (TLS 伪装域名)")"
+
+    ss_port="$SS_PORT_DEFAULT"
+    reality_port="$REALITY_PORT_DEFAULT"
+    node_name="$NODE_NAME_DEFAULT"
+    ss_password="$(generate_ss_password)"
+    uuid="$(generate_uuid)"
+    reality_short_id="$(generate_short_id)"
+    generate_reality_keypair
+
+    echo
+    info "=== 处理自动生成项 ==="
+    echo "已生成 SS 密钥: $ss_password"
+    echo "已生成 UUID: $uuid"
+    echo "已生成 Reality 密钥对"
+    echo "  PrivateKey: $reality_private_key"
+    echo "  PublicKey:  $reality_public_key"
+    echo "已生成 short_id: $reality_short_id"
+}
+
+collect_config() {
+    echo
+    info "=== 请选择配置模式 ==="
+    echo "  1) 自定义模式  - 逐项填写端口/密钥/UUID/SNI/节点名 (共 8 项)"
+    echo "  2) 全自动模式  - 仅输入 SNI，其余全部默认值或自动生成"
+    read -rp "请选择 [1/2]: " mode
+
+    case "$mode" in
+        1)
+            collect_custom_config
+            ;;
+        2|"")
+            collect_auto_config
+            ;;
+        *)
+            warn "输入无效，默认使用全自动模式"
+            collect_auto_config
+            ;;
     esac
-done
+}
 
-if [[ "$MODE" == "quick" ]]; then
-    echo -e "\n${CYAN}=== 全自动模式 ===${NC}"
-    echo -e "${YELLOW}除 SNI 外，其余字段使用默认值或自动生成${NC}\n"
-    while true; do
-        read -rp "请输入 Reality SNI 域名 (TLS 伪装域名): " quick_sni
-        [[ -n "$quick_sni" ]] && break
-        echo -e "${RED}SNI 不能为空${NC}"
-    done
-    VALUES=(
-        "21958"
-        "<auto>"
-        "21959"
-        "<auto>"
-        "<auto>"
-        "<auto>"
-        "$quick_sni"
-        "${HOSTNAME_VAL}"
-    )
-else
-    while true; do
-        collect_inputs
-        echo -e "\n${CYAN}=== 请确认以下配置 ===${NC}"
-        for idx in "${!LABELS[@]}"; do
-            disp_v="${VALUES[$idx]}"
-            [[ "$disp_v" == "<auto>" ]] && disp_v="${YELLOW}<将自动生成>${NC}"
-            echo -e "  ${LABELS[$idx]}: ${disp_v}"
-        done
-        read -rp "确认无误? (y=确认 / r=重头修改 / q=退出): " confirm
-        case "$confirm" in
-            y|Y) break ;;
-            q|Q) echo -e "${RED}已放弃配置，退出${NC}"; exit 1 ;;
-            *) ;;
-        esac
-    done
-fi
+json_escape() {
+    printf '%s' "$1" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g'
+}
 
-ss_port="${VALUES[0]}"
-ss_password="${VALUES[1]}"
-reality_port="${VALUES[2]}"
-reality_uuid="${VALUES[3]}"
-reality_private_key="${VALUES[4]}"
-reality_short_id="${VALUES[5]}"
-reality_sni="${VALUES[6]}"
-name_prefix="${VALUES[7]}"
-reality_public_key=""
+write_config() {
+    if [[ -f "$CONFIG_PATH" ]]; then
+        local backup="${CONFIG_PATH}.bak.$(date +%Y%m%d%H%M%S)"
+        warn "发现已存在配置，已备份为 ${backup}"
+        run_as_root cp "$CONFIG_PATH" "$backup"
+    fi
 
-# ---------- 3.5 自动生成空缺字段 / 收集额外公钥 ----------
-echo -e "\n${CYAN}=== 处理自动生成项 ===${NC}"
+    local ss_password_e reality_private_key_e reality_short_id_e reality_sni_e uuid_e node_name_e
+    ss_password_e="$(json_escape "$ss_password")"
+    reality_private_key_e="$(json_escape "$reality_private_key")"
+    reality_short_id_e="$(json_escape "$reality_short_id")"
+    reality_sni_e="$(json_escape "$reality_sni")"
+    uuid_e="$(json_escape "$uuid")"
+    node_name_e="$(json_escape "$node_name")"
 
-if [[ "$ss_password" == "<auto>" ]]; then
-    ss_password=$(sing-box generate rand --base64 16)
-    echo -e "${GREEN}已生成 SS 密钥:${NC} $ss_password"
-fi
-
-if [[ "$reality_uuid" == "<auto>" ]]; then
-    reality_uuid=$(sing-box generate uuid)
-    echo -e "${GREEN}已生成 UUID:${NC} $reality_uuid"
-fi
-
-if [[ "$reality_private_key" == "<auto>" ]]; then
-    keypair=$(sing-box generate reality-keypair)
-    reality_private_key=$(echo "$keypair" | awk -F': *' '/PrivateKey/ {print $2}')
-    reality_public_key=$(echo "$keypair" | awk -F': *' '/PublicKey/ {print $2}')
-    echo -e "${GREEN}已生成 Reality 密钥对${NC}"
-    echo -e "  PrivateKey: $reality_private_key"
-    echo -e "  PublicKey:  $reality_public_key"
-else
-    while true; do
-        read -rp "请输入与该 private_key 对应的 public_key (用于客户端连接链接): " reality_public_key
-        [[ -n "$reality_public_key" ]] && break
-        echo -e "${RED}不能为空${NC}"
-    done
-fi
-
-if [[ "$reality_short_id" == "<auto>" ]]; then
-    reality_short_id=$(sing-box generate rand 8 --hex)
-    echo -e "${GREEN}已生成 short_id:${NC} $reality_short_id"
-fi
-
-# ---------- 4. 写入新配置 ----------
-# 转义 JSON 中的特殊字符（反斜杠和双引号）
-esc() { printf '%s' "$1" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g'; }
-ss_password_e=$(esc "$ss_password")
-reality_uuid_e=$(esc "$reality_uuid")
-reality_private_key_e=$(esc "$reality_private_key")
-reality_short_id_e=$(esc "$reality_short_id")
-reality_sni_e=$(esc "$reality_sni")
-
-sudo tee "${CONFIG_PATH}" > /dev/null <<EOF
+    run_as_root tee "$CONFIG_PATH" >/dev/null <<EOF
 {
   "dns": {
     "servers": [
@@ -290,24 +346,24 @@ sudo tee "${CONFIG_PATH}" > /dev/null <<EOF
   },
   "inbounds": [
     {
-      "tag": "SS",
+      "tag": "SS-${node_name_e}",
       "type": "shadowsocks",
       "listen": "::",
       "listen_port": ${ss_port},
-      "method": "${SS_METHOD}",
+      "method": "${SS_METHOD_DEFAULT}",
       "password": "${ss_password_e}",
       "multiplex": {
         "enabled": true
       }
     },
     {
-      "tag": "Reality",
+      "tag": "Reality-${node_name_e}",
       "type": "vless",
       "listen": "0.0.0.0",
       "listen_port": ${reality_port},
       "users": [
         {
-          "uuid": "${reality_uuid_e}",
+          "uuid": "${uuid_e}",
           "flow": "xtls-rprx-vision"
         }
       ],
@@ -337,7 +393,7 @@ sudo tee "${CONFIG_PATH}" > /dev/null <<EOF
   "route": {
     "default_domain_resolver": "cloudflare",
     "rules": [
-      { "inbound": ["Reality","SS"], "outbound": "direct" }
+      { "inbound": ["Reality-${node_name_e}", "SS-${node_name_e}"], "outbound": "direct" }
     ],
     "final": "direct",
     "auto_detect_interface": true
@@ -355,108 +411,118 @@ sudo tee "${CONFIG_PATH}" > /dev/null <<EOF
   }
 }
 EOF
+}
 
-# ---------- 5. 设置权限 ----------
-echo "设置目录与配置权限..."
-sudo chown -R sing-box:sing-box /var/lib/sing-box "${CONFIG_DIR}"
-sudo chmod 640 "${CONFIG_PATH}"
+set_permissions() {
+    echo "设置目录与配置权限..."
+    run_as_root mkdir -p "$DATA_DIR" "$CONFIG_DIR"
+    run_as_root chown -R sing-box:sing-box "$DATA_DIR" "$CONFIG_DIR"
+    run_as_root chmod 640 "$CONFIG_PATH"
+}
 
-# ---------- 6. 校验配置 ----------
-echo "校验 sing-box 配置..."
-if ! sudo sing-box check -c "${CONFIG_PATH}"; then
-    echo -e "${RED}配置校验失败，请检查输入内容${NC}"
-    exit 1
-fi
-echo -e "${GREEN}配置校验通过${NC}"
-
-# ---------- 7. 设置开机自启并启动 ----------
-echo "启用开机自启并启动 sing-box..."
-sudo systemctl daemon-reload
-sudo systemctl enable sing-box >/dev/null 2>&1
-sudo systemctl restart sing-box
-
-sleep 1
-if sudo systemctl is-active --quiet sing-box; then
-    echo -e "${GREEN}sing-box 已启动并设置为开机自启${NC}"
-    echo -e "${CYAN}查看状态：${NC} sudo systemctl status sing-box"
-    echo -e "${CYAN}查看日志：${NC} sudo journalctl -u sing-box -f"
-else
-    echo -e "${RED}sing-box 启动失败，请运行 'sudo journalctl -u sing-box -e' 查看日志${NC}"
-    exit 1
-fi
-
-# ---------- 8. 输出客户端连接链接 ----------
-echo -e "\n${CYAN}=== 探测服务器公网 IP ===${NC}"
-ipv4=$(curl -4 -fsS --max-time 5 https://api.ipify.org 2>/dev/null || true)
-ipv6=$(curl -6 -fsS --max-time 5 https://api64.ipify.org 2>/dev/null || true)
-[[ -n "$ipv4" ]] && echo -e "IPv4: ${GREEN}${ipv4}${NC}" || echo -e "IPv4: ${YELLOW}未检测到${NC}"
-[[ -n "$ipv6" ]] && echo -e "IPv6: ${GREEN}${ipv6}${NC}" || echo -e "IPv6: ${YELLOW}未检测到${NC}"
-
-ss_userinfo=$(printf '%s' "${SS_METHOD}:${ss_password}" | base64 -w0)
-
-LINKS_FILE="${CONFIG_DIR}/client-links.txt"
-{
-    echo "# sing-box client links — generated $(date -Iseconds)"
-    echo
-    if [[ -n "$ipv4" ]]; then
-        echo "[SS-IPv4]"
-        echo "ss://${ss_userinfo}@${ipv4}:${ss_port}#${name_prefix}-SS-v4"
-        echo
-        echo "[Reality-IPv4]"
-        echo "vless://${reality_uuid}@${ipv4}:${reality_port}?encryption=none&flow=xtls-rprx-vision&security=reality&sni=${reality_sni}&fp=chrome&pbk=${reality_public_key}&sid=${reality_short_id}&type=tcp&headerType=none#${name_prefix}-Reality-v4"
-        echo
+check_config() {
+    echo "校验 sing-box 配置..."
+    if ! run_as_root sing-box check -c "$CONFIG_PATH"; then
+        error "配置校验失败，请检查输入内容"
+        exit 1
     fi
-    if [[ -n "$ipv6" ]]; then
-        echo "[SS-IPv6]"
-        echo "ss://${ss_userinfo}@[${ipv6}]:${ss_port}#${name_prefix}-SS-v6"
-        echo
-        echo "[Reality-IPv6]"
-        echo "vless://${reality_uuid}@[${ipv6}]:${reality_port}?encryption=none&flow=xtls-rprx-vision&security=reality&sni=${reality_sni}&fp=chrome&pbk=${reality_public_key}&sid=${reality_short_id}&type=tcp&headerType=none#${name_prefix}-Reality-v6"
-        echo
+    success "配置校验通过"
+}
+
+ensure_openrc_service() {
+    if [[ -x "/etc/init.d/${SERVICE_NAME}" ]]; then
+        return
     fi
-} | sudo tee "${LINKS_FILE}" > /dev/null
-sudo chown sing-box:sing-box "${LINKS_FILE}" 2>/dev/null || true
-sudo chmod 640 "${LINKS_FILE}"
 
-echo -e "\n${CYAN}=== 客户端连接链接 ===${NC}"
-if [[ -n "$ipv4" ]]; then
-    echo -e "${GREEN}SS (IPv4):${NC}"
-    echo "  ss://${ss_userinfo}@${ipv4}:${ss_port}#${name_prefix}-SS-v4"
-    echo -e "${GREEN}Reality (IPv4):${NC}"
-    echo "  vless://${reality_uuid}@${ipv4}:${reality_port}?encryption=none&flow=xtls-rprx-vision&security=reality&sni=${reality_sni}&fp=chrome&pbk=${reality_public_key}&sid=${reality_short_id}&type=tcp&headerType=none#${name_prefix}-Reality-v4"
-fi
-if [[ -n "$ipv6" ]]; then
-    echo -e "${GREEN}SS (IPv6):${NC}"
-    echo "  ss://${ss_userinfo}@[${ipv6}]:${ss_port}#${name_prefix}-SS-v6"
-    echo -e "${GREEN}Reality (IPv6):${NC}"
-    echo "  vless://${reality_uuid}@[${ipv6}]:${reality_port}?encryption=none&flow=xtls-rprx-vision&security=reality&sni=${reality_sni}&fp=chrome&pbk=${reality_public_key}&sid=${reality_short_id}&type=tcp&headerType=none#${name_prefix}-Reality-v6"
-fi
-echo -e "\n${YELLOW}以上链接已保存至 ${LINKS_FILE}${NC}"
+    local sing_box_bin
+    sing_box_bin="$(command -v sing-box)"
 
-# 保存所有原始字段，方便备份/恢复
-SECRETS_FILE="${CONFIG_DIR}/secrets.txt"
-sudo tee "${SECRETS_FILE}" > /dev/null <<EOF
-# sing-box secrets — generated $(date -Iseconds)
-# 备份此文件即可保留全部连接所需字段（含 public_key）
-SS_METHOD=${SS_METHOD}
-SS_PORT=${ss_port}
-SS_PASSWORD=${ss_password}
-REALITY_PORT=${reality_port}
-REALITY_UUID=${reality_uuid}
-REALITY_PRIVATE_KEY=${reality_private_key}
-REALITY_PUBLIC_KEY=${reality_public_key}
-REALITY_SHORT_ID=${reality_short_id}
-REALITY_SNI=${reality_sni}
-NAME_PREFIX=${name_prefix}
+    echo "未找到 OpenRC 服务文件，正在创建 /etc/init.d/${SERVICE_NAME}..."
+    run_as_root tee "/etc/init.d/${SERVICE_NAME}" >/dev/null <<EOF
+#!/sbin/openrc-run
+
+name="${SERVICE_NAME}"
+description="sing-box service"
+supervisor="supervise-daemon"
+command="${sing_box_bin}"
+command_args="run -c ${CONFIG_PATH} -D ${DATA_DIR}"
+command_user="sing-box:sing-box"
+output_log="/var/log/sing-box.log"
+error_log="/var/log/sing-box.err"
+
+depend() {
+    need net
+    after firewall
+}
 EOF
-sudo chown root:root "${SECRETS_FILE}"
-sudo chmod 600 "${SECRETS_FILE}"
+    run_as_root chmod +x "/etc/init.d/${SERVICE_NAME}"
+}
 
-echo -e "${YELLOW}原始凭据已保存至 ${SECRETS_FILE} (root 600)${NC}"
-echo -e "${YELLOW}备份命令: sudo tar czf singbox-backup.tar.gz -C /etc sing-box/${NC}"
+start_service_systemd() {
+    run_as_root systemctl daemon-reload
+    run_as_root systemctl enable "$SERVICE_NAME" >/dev/null 2>&1
+    run_as_root systemctl restart "$SERVICE_NAME"
 
-# ---------- 9. 自删除安装脚本 ----------
-SCRIPT_PATH=$(readlink -f "$0" 2>/dev/null || echo "$0")
-if [[ -f "$SCRIPT_PATH" ]]; then
-    rm -f -- "$SCRIPT_PATH" && echo -e "${CYAN}安装脚本已自动删除: ${SCRIPT_PATH}${NC}"
-fi
+    sleep 1
+    if run_as_root systemctl is-active --quiet "$SERVICE_NAME"; then
+        success "sing-box 已启动并设置为开机自启"
+        info "查看状态： sudo systemctl status ${SERVICE_NAME}"
+        info "查看日志： sudo journalctl -u ${SERVICE_NAME} -f"
+    else
+        error "sing-box 启动失败，请运行 'sudo journalctl -u ${SERVICE_NAME} -e' 查看日志"
+        exit 1
+    fi
+}
+
+start_service_openrc() {
+    ensure_openrc_service
+    run_as_root rc-update add "$SERVICE_NAME" default >/dev/null 2>&1 || true
+    run_as_root rc-service "$SERVICE_NAME" restart
+
+    sleep 1
+    if run_as_root rc-service "$SERVICE_NAME" status >/dev/null 2>&1; then
+        success "sing-box 已启动并设置为开机自启"
+        info "查看状态： rc-service ${SERVICE_NAME} status"
+        info "查看日志： tail -f /var/log/sing-box.log /var/log/sing-box.err"
+    else
+        error "sing-box 启动失败，请运行 'rc-service ${SERVICE_NAME} status' 或查看 /var/log/sing-box.err"
+        exit 1
+    fi
+}
+
+start_service_manual_hint() {
+    warn "未检测到 systemd 或 OpenRC，已跳过开机自启配置"
+    info "可手动运行： sing-box run -c ${CONFIG_PATH} -D ${DATA_DIR}"
+}
+
+start_service() {
+    echo "启用开机自启并启动 sing-box..."
+
+    case "$SERVICE_MANAGER" in
+        systemd)
+            start_service_systemd
+            ;;
+        openrc)
+            start_service_openrc
+            ;;
+        *)
+            start_service_manual_hint
+            ;;
+    esac
+}
+
+main() {
+    detect_os
+    detect_service_manager
+    install_sing_box
+    ensure_sing_box_available
+    ensure_sing_box_user
+    run_as_root mkdir -p "$DATA_DIR" "$CONFIG_DIR"
+    collect_config
+    write_config
+    set_permissions
+    check_config
+    start_service
+}
+
+main "$@"
