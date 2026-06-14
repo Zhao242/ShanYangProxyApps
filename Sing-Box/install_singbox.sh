@@ -12,14 +12,13 @@ CONFIG_PATH="${CONFIG_DIR}/config.json"
 DATA_DIR="/var/lib/sing-box"
 SERVICE_NAME="sing-box"
 
-OS_FAMILY=""
-SERVICE_MANAGER=""
-
 SS_PORT_DEFAULT="21958"
 REALITY_PORT_DEFAULT="21959"
-UUID_DEFAULT="4bd7d2f4-9f01-4596-b4d3-326d2f0b27e5"
 NODE_NAME_DEFAULT="ShanYang"
 SS_METHOD_DEFAULT="2022-blake3-aes-128-gcm"
+
+OS_FAMILY=""
+SERVICE_MANAGER=""
 
 info() { echo -e "${CYAN}$*${NC}"; }
 warn() { echo -e "${YELLOW}$*${NC}"; }
@@ -42,31 +41,23 @@ run_as_root() {
 }
 
 detect_os() {
-    local id="" id_like="" pretty_name=""
-
+    local os_text=""
     if [[ -r /etc/os-release ]]; then
         # shellcheck disable=SC1091
         source /etc/os-release
-        id="${ID:-}"
-        id_like="${ID_LIKE:-}"
-        pretty_name="${PRETTY_NAME:-}"
+        os_text="${ID:-} ${ID_LIKE:-}"
     fi
 
-    local os_text="${id} ${id_like}"
     case "$os_text" in
-        *alpine*)
-            OS_FAMILY="alpine"
-            ;;
-        *debian*|*ubuntu*)
-            OS_FAMILY="debian"
-            ;;
+        *alpine*) OS_FAMILY="alpine" ;;
+        *debian*|*ubuntu*) OS_FAMILY="debian" ;;
         *)
             if command_exists apk; then
                 OS_FAMILY="alpine"
             elif command_exists apt-get; then
                 OS_FAMILY="debian"
             else
-                error "暂不支持当前系统：${pretty_name:-unknown}"
+                error "暂不支持当前系统"
                 exit 1
             fi
             ;;
@@ -83,19 +74,21 @@ detect_service_manager() {
     fi
 }
 
-install_base_tools_debian() {
-    run_as_root apt-get update -qq >/dev/null 2>&1
-    run_as_root apt-get install -yq ca-certificates curl openssl >/dev/null 2>&1
-}
-
-install_base_tools_alpine() {
-    run_as_root apk update >/dev/null
-    run_as_root apk add --no-cache ca-certificates curl openssl shadow >/dev/null
+install_base_tools() {
+    case "$OS_FAMILY" in
+        debian)
+            run_as_root apt-get update -qq >/dev/null 2>&1
+            run_as_root apt-get install -yq ca-certificates curl openssl >/dev/null 2>&1
+            ;;
+        alpine)
+            run_as_root apk update >/dev/null
+            run_as_root apk add --no-cache ca-certificates curl openssl shadow bash >/dev/null
+            ;;
+    esac
 }
 
 install_sing_box_debian() {
-    install_base_tools_debian
-
+    install_base_tools
     info "添加 sing-box 官方 APT 仓库..."
     run_as_root mkdir -p /etc/apt/keyrings
     run_as_root curl -fsSL https://sing-box.app/gpg.key -o /etc/apt/keyrings/sagernet.asc
@@ -108,22 +101,18 @@ Components: *
 Enabled: yes
 Signed-By: /etc/apt/keyrings/sagernet.asc
 EOF
-
     echo "正在更新包列表，请稍候..."
     run_as_root apt-get update -qq >/dev/null 2>&1
-
     echo "正在安装 sing-box 稳定版..."
     run_as_root apt-get install -yq sing-box >/dev/null 2>&1
 }
 
 install_sing_box_alpine() {
-    install_base_tools_alpine
-
+    install_base_tools
     info "使用 APK 安装 sing-box..."
     if run_as_root apk add --no-cache sing-box; then
         return
     fi
-
     warn "默认 Alpine 仓库未找到 sing-box，尝试 Alpine edge/testing 仓库..."
     run_as_root apk add --no-cache \
         --repository=https://dl-cdn.alpinelinux.org/alpine/edge/testing \
@@ -137,36 +126,16 @@ install_sing_box() {
         echo "检测到已安装 sing-box，当前版本: ${current_version:-unknown}"
         read -rp "请选择操作 (1=升级到最新稳定版 / 2=跳过安装 / q=退出): " install_choice
         case "$install_choice" in
-            1)
-                ;;
-            2)
-                echo "跳过安装步骤"
-                ;;
-            q|Q)
-                echo "已退出"
-                exit 0
-                ;;
-            *)
-                warn "输入无效，默认跳过安装步骤"
-                ;;
+            1) ;;
+            2|"") echo "跳过安装步骤"; return ;;
+            q|Q) echo "已退出"; exit 0 ;;
+            *) warn "输入无效，默认跳过安装步骤"; return ;;
         esac
-
-        if [[ "${install_choice:-2}" != "1" ]]; then
-            return
-        fi
     fi
 
     case "$OS_FAMILY" in
-        debian)
-            install_sing_box_debian
-            ;;
-        alpine)
-            install_sing_box_alpine
-            ;;
-        *)
-            error "暂不支持当前系统：${OS_FAMILY}"
-            exit 1
-            ;;
+        debian) install_sing_box_debian ;;
+        alpine) install_sing_box_alpine ;;
     esac
 }
 
@@ -175,7 +144,6 @@ ensure_sing_box_available() {
         error "sing-box 不可用，请检查安装日志或网络配置"
         exit 1
     fi
-
     local version
     version="$(sing-box version 2>/dev/null | awk '/sing-box version/ {print $3; exit}')"
     success "sing-box 可用，版本： ${version:-unknown}"
@@ -187,7 +155,6 @@ ensure_sing_box_user() {
     fi
 
     echo "正在创建 sing-box 系统用户..."
-
     if command_exists useradd; then
         local nologin="/usr/sbin/nologin"
         [[ -x "$nologin" ]] || nologin="/sbin/nologin"
@@ -210,7 +177,7 @@ generate_ss_password() {
     if command_exists openssl; then
         openssl rand -base64 16
     else
-        head -c 16 /dev/urandom | base64
+        head -c 16 /dev/urandom | base64 | tr -d '\n'
     fi
 }
 
@@ -237,16 +204,14 @@ generate_reality_keypair() {
     output="$(sing-box generate reality-keypair 2>/dev/null || true)"
     reality_private_key="$(echo "$output" | awk -F': ' '/PrivateKey/ {print $2; exit}')"
     reality_public_key="$(echo "$output" | awk -F': ' '/PublicKey/ {print $2; exit}')"
-
     if [[ -z "$reality_private_key" || -z "$reality_public_key" ]]; then
-        error "Reality 密钥对生成失败，请确认 sing-box 版本支持 'generate reality-keypair'"
+        error "Reality 密钥对生成失败"
         exit 1
     fi
 }
 
 read_required() {
-    local prompt="$1"
-    local value=""
+    local prompt="$1" value=""
     while [[ -z "$value" ]]; do
         read -rp "$prompt: " value
         [[ -n "$value" ]] || error "不能为空"
@@ -257,12 +222,12 @@ read_required() {
 collect_custom_config() {
     echo
     info "=== 自定义模式 ==="
-
     ss_port="$(read_required "请输入 Shadowsocks 端口")"
     ss_password="$(read_required "请输入 Shadowsocks 密钥 (${SS_METHOD_DEFAULT}，需 base64，16 字节)")"
     reality_port="$(read_required "请输入 Reality 端口")"
     uuid="$(read_required "请输入 Reality UUID")"
     reality_private_key="$(read_required "请输入 Reality private_key")"
+    reality_public_key="$(read_required "请输入 Reality public_key (用于生成客户端链接)")"
     reality_short_id="$(read_required "请输入 Reality short_id")"
     reality_sni="$(read_required "请输入 Reality SNI 域名 (TLS 伪装域名)")"
     node_name="$(read_required "请输入节点名")"
@@ -273,7 +238,6 @@ collect_auto_config() {
     info "=== 全自动模式 ==="
     echo "除 SNI 外，其余字段使用默认值或自动生成"
     echo
-
     reality_sni="$(read_required "请输入 Reality SNI 域名 (TLS 伪装域名)")"
 
     ss_port="$SS_PORT_DEFAULT"
@@ -297,21 +261,13 @@ collect_auto_config() {
 collect_config() {
     echo
     info "=== 请选择配置模式 ==="
-    echo "  1) 自定义模式  - 逐项填写端口/密钥/UUID/SNI/节点名 (共 8 项)"
+    echo "  1) 自定义模式  - 逐项填写端口/密钥/UUID/SNI/节点名"
     echo "  2) 全自动模式  - 仅输入 SNI，其余全部默认值或自动生成"
     read -rp "请选择 [1/2]: " mode
-
     case "$mode" in
-        1)
-            collect_custom_config
-            ;;
-        2|"")
-            collect_auto_config
-            ;;
-        *)
-            warn "输入无效，默认使用全自动模式"
-            collect_auto_config
-            ;;
+        1) collect_custom_config ;;
+        2|"") collect_auto_config ;;
+        *) warn "输入无效，默认使用全自动模式"; collect_auto_config ;;
     esac
 }
 
@@ -352,9 +308,7 @@ write_config() {
       "listen_port": ${ss_port},
       "method": "${SS_METHOD_DEFAULT}",
       "password": "${ss_password_e}",
-      "multiplex": {
-        "enabled": true
-      }
+      "multiplex": { "enabled": true }
     },
     {
       "tag": "Reality-${node_name_e}",
@@ -377,18 +331,13 @@ write_config() {
             "server_port": 443
           },
           "private_key": "${reality_private_key_e}",
-          "short_id": [
-            "${reality_short_id_e}"
-          ]
+          "short_id": ["${reality_short_id_e}"]
         }
       }
     }
   ],
   "outbounds": [
-    {
-      "tag": "direct",
-      "type": "direct"
-    }
+    { "tag": "direct", "type": "direct" }
   ],
   "route": {
     "default_domain_resolver": "cloudflare",
@@ -436,7 +385,6 @@ ensure_openrc_service() {
 
     local sing_box_bin
     sing_box_bin="$(command -v sing-box)"
-
     echo "未找到 OpenRC 服务文件，正在创建 /etc/init.d/${SERVICE_NAME}..."
     run_as_root tee "/etc/init.d/${SERVICE_NAME}" >/dev/null <<EOF
 #!/sbin/openrc-run
@@ -458,57 +406,109 @@ EOF
     run_as_root chmod +x "/etc/init.d/${SERVICE_NAME}"
 }
 
-start_service_systemd() {
-    run_as_root systemctl daemon-reload
-    run_as_root systemctl enable "$SERVICE_NAME" >/dev/null 2>&1
-    run_as_root systemctl restart "$SERVICE_NAME"
-
-    sleep 1
-    if run_as_root systemctl is-active --quiet "$SERVICE_NAME"; then
-        success "sing-box 已启动并设置为开机自启"
-        info "查看状态： sudo systemctl status ${SERVICE_NAME}"
-        info "查看日志： sudo journalctl -u ${SERVICE_NAME} -f"
-    else
-        error "sing-box 启动失败，请运行 'sudo journalctl -u ${SERVICE_NAME} -e' 查看日志"
-        exit 1
-    fi
-}
-
-start_service_openrc() {
-    ensure_openrc_service
-    run_as_root rc-update add "$SERVICE_NAME" default >/dev/null 2>&1 || true
-    run_as_root rc-service "$SERVICE_NAME" restart
-
-    sleep 1
-    if run_as_root rc-service "$SERVICE_NAME" status >/dev/null 2>&1; then
-        success "sing-box 已启动并设置为开机自启"
-        info "查看状态： rc-service ${SERVICE_NAME} status"
-        info "查看日志： tail -f /var/log/sing-box.log /var/log/sing-box.err"
-    else
-        error "sing-box 启动失败，请运行 'rc-service ${SERVICE_NAME} status' 或查看 /var/log/sing-box.err"
-        exit 1
-    fi
-}
-
-start_service_manual_hint() {
-    warn "未检测到 systemd 或 OpenRC，已跳过开机自启配置"
-    info "可手动运行： sing-box run -c ${CONFIG_PATH} -D ${DATA_DIR}"
-}
-
 start_service() {
     echo "启用开机自启并启动 sing-box..."
-
     case "$SERVICE_MANAGER" in
         systemd)
-            start_service_systemd
+            run_as_root systemctl daemon-reload
+            run_as_root systemctl enable "$SERVICE_NAME" >/dev/null 2>&1
+            run_as_root systemctl restart "$SERVICE_NAME"
+            sleep 1
+            if run_as_root systemctl is-active --quiet "$SERVICE_NAME"; then
+                success "sing-box 已启动并设置为开机自启"
+                info "查看状态： sudo systemctl status ${SERVICE_NAME}"
+                info "查看日志： sudo journalctl -u ${SERVICE_NAME} -f"
+            else
+                error "sing-box 启动失败，请运行 'sudo journalctl -u ${SERVICE_NAME} -e' 查看日志"
+                exit 1
+            fi
             ;;
         openrc)
-            start_service_openrc
+            ensure_openrc_service
+            run_as_root rc-update add "$SERVICE_NAME" default >/dev/null 2>&1 || true
+            run_as_root rc-service "$SERVICE_NAME" restart
+            sleep 1
+            if run_as_root rc-service "$SERVICE_NAME" status >/dev/null 2>&1; then
+                success "sing-box 已启动并设置为开机自启"
+                info "查看状态： rc-service ${SERVICE_NAME} status"
+                info "查看日志： tail -f /var/log/sing-box.log /var/log/sing-box.err"
+            else
+                error "sing-box 启动失败，请运行 'rc-service ${SERVICE_NAME} status' 或查看 /var/log/sing-box.err"
+                exit 1
+            fi
             ;;
         *)
-            start_service_manual_hint
+            warn "未检测到 systemd 或 OpenRC，已跳过开机自启配置"
+            info "可手动运行： sing-box run -c ${CONFIG_PATH} -D ${DATA_DIR}"
             ;;
     esac
+}
+
+b64_no_wrap() {
+    base64 | tr -d '\n'
+}
+
+url_encode() {
+    local string="$1" encoded="" pos c o
+    LC_ALL=C
+    for ((pos = 0; pos < ${#string}; pos++)); do
+        c="${string:$pos:1}"
+        case "$c" in
+            [a-zA-Z0-9.~_-]) encoded+="$c" ;;
+            *) printf -v o '%%%02X' "'$c"; encoded+="$o" ;;
+        esac
+    done
+    printf '%s' "$encoded"
+}
+
+detect_server_addr() {
+    if [[ -n "${SERVER_ADDR:-}" ]]; then
+        server_addr="$SERVER_ADDR"
+        return
+    fi
+
+    if command_exists curl; then
+        server_addr="$(curl -fsS --max-time 6 https://api.ipify.org 2>/dev/null | tr -d ' \r\n' || true)"
+        if [[ -z "$server_addr" ]]; then
+            server_addr="$(curl -fsS --max-time 6 https://icanhazip.com 2>/dev/null | tr -d ' \r\n' || true)"
+        fi
+    fi
+
+    while [[ -z "$server_addr" ]]; do
+        read -rp "无法自动获取公网 IP，请输入服务器 IP 或域名: " server_addr
+    done
+}
+
+link_host() {
+    local host="$1"
+    if [[ "$host" == *:* && "$host" != \[*\] ]]; then
+        printf '[%s]' "$host"
+    else
+        printf '%s' "$host"
+    fi
+}
+
+print_links() {
+    detect_server_addr
+
+    local ss_userinfo ss_name reality_name ss_link reality_link server_host
+    server_host="$(link_host "$server_addr")"
+    ss_userinfo="$(printf '%s:%s' "$SS_METHOD_DEFAULT" "$ss_password" | b64_no_wrap)"
+    ss_name="$(url_encode "SS-${node_name}")"
+    reality_name="$(url_encode "Reality-${node_name}")"
+
+    ss_link="ss://${ss_userinfo}@${server_host}:${ss_port}#${ss_name}"
+    reality_link="vless://${uuid}@${server_host}:${reality_port}?encryption=none&flow=xtls-rprx-vision&security=reality&sni=$(url_encode "$reality_sni")&fp=chrome&pbk=$(url_encode "$reality_public_key")&sid=${reality_short_id}&type=tcp&headerType=none#${reality_name}"
+
+    echo
+    info "=== 客户端导入链接 ==="
+    echo "服务器地址: ${server_addr}"
+    echo
+    echo "Shadowsocks:"
+    echo "$ss_link"
+    echo
+    echo "Reality/VLESS:"
+    echo "$reality_link"
 }
 
 main() {
@@ -523,6 +523,7 @@ main() {
     set_permissions
     check_config
     start_service
+    print_links
 }
 
 main "$@"
