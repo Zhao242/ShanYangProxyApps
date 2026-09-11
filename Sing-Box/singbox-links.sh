@@ -241,10 +241,15 @@ def family:
     if contains(":") then "v6"
     elif test("^[0-9.]+$") then "v4" else "" end;
 def authority: if contains(":") then "[" + . + "]" else . end;
+# Match urllib.parse.quote(..., safe="") used by the original parser.
+def uri:
+    @uri | gsub("!"; "%21") | gsub("'"; "%27") |
+    gsub("\\("; "%28") | gsub("\\)"; "%29") | gsub("\\*"; "%2A");
 def node_label($tag; $user; $family):
-    [$name, $tag, $user, $family] | map(select(length > 0)) | join("-") | @uri;
+    [$name, $tag, $user, $family] | map(select(length > 0)) | join("-") | uri;
 def query:
-    map((.[0] | @uri) + "=" + (.[1] | @uri)) | join("&");
+    map((.[0] | uri | gsub("%20"; "+")) + "=" +
+        (.[1] | uri | gsub("%20"; "+"))) | join("&");
 
 ($keymap | split("\n") | map(select(length > 0) | split("\t") |
     {key: .[0], value: .[1]}) | from_entries) as $public_keys |
@@ -261,6 +266,7 @@ def query:
     elif .type == "shadowsocks" then
         (.tag | text_or("SS")) as $tag |
         (.method | str) as $method | (.password | str) as $server_password |
+        $targets[] as $target |
         (if (.users | arr | length) > 0 then
             .users | to_entries[] | .key as $index | .value | objects |
             (.method | text_or($method)) as $m |
@@ -271,11 +277,9 @@ def query:
          else {name: "", method: $method, password: $server_password} end) as $user |
         if $user.method == "" or $user.password == "" then skip("SS method / password missing")
         else
-            (if ($user.method | startswith("2022-")) then
-                ($user.method | @uri) + ":" + ($user.password | @uri)
-             else ($user.method + ":" + $user.password | @base64 |
-                gsub("\\+"; "-") | gsub("/"; "_") | rtrimstr("=") | rtrimstr("=")) end) as $auth |
-            $targets[] | "ss://" + $auth + "@" + (.host | authority) + ":" +
+            # Preserve the original parser's padded standard Base64 for every SS method.
+            ($user.method + ":" + $user.password | @base64) as $auth |
+            $target | "ss://" + $auth + "@" + (.host | authority) + ":" +
                 ($in.listen_port | tostring) + "#" + node_label($tag; $user.name; .family)
         end
     else
@@ -292,6 +296,7 @@ def query:
             if $pbk == "" then skip("Reality public key unavailable")
             elif $sni == "" then skip("Reality server_name / handshake.server missing")
             else
+                $targets[] as $target |
                 $users | to_entries[] | .key as $index | .value | objects |
                 (.uuid | str) as $uuid | (.flow | str) as $flow |
                 (.name | text_or(if ($users | length) > 1 then "user" + (($index + 1) | tostring) else "" end)) as $user |
@@ -301,7 +306,7 @@ def query:
                         [["security", "reality"], ["sni", $sni], ["fp", $fingerprint], ["pbk", $pbk]] +
                         (if $sid != "" then [["sid", $sid]] else [] end) +
                         [["type", "tcp"], ["headerType", "none"]] | query) as $query |
-                    $targets[] | "vless://" + ($uuid | @uri) + "@" + (.host | authority) + ":" +
+                    $target | "vless://" + ($uuid | uri) + "@" + (.host | authority) + ":" +
                         ($in.listen_port | tostring) + "?" + $query + "#" + node_label($tag; $user; .family)
                 end
             end
@@ -317,7 +322,9 @@ if ! jq -r --arg name "$name" --arg host "$host" --arg ipv4 "$ipv4" --arg ipv6 "
 fi
 
 if [ "$base64_output" = 1 ]; then
-    openssl base64 -A -in "$temp_dir/links.txt"
+    # Match the original parser: encode joined links without a final newline.
+    links_body=$(cat "$temp_dir/links.txt")
+    printf '%s' "$links_body" | openssl base64 -A
     printf '\n'
 else
     cat "$temp_dir/links.txt"
