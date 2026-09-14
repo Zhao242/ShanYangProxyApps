@@ -1,5 +1,5 @@
 #!/bin/sh
-# Debian / Alpine: export local sing-box links with jq and OpenSSL.
+# Debian / Ubuntu / Alpine: export local sing-box links with jq and OpenSSL.
 # Upload this single file to GitHub as UTF-8 with LF line endings.
 set -eu
 
@@ -48,7 +48,7 @@ Usage: sh singbox-links.sh [options]
   -h, --help         show this help
 
 Supports Shadowsocks and VLESS Reality over TCP. No Python or Bash required.
-Missing jq / openssl / curl are installed using apt-get (Debian) or apk
+Missing jq / openssl / curl are installed using apt-get (Debian / Ubuntu) or apk
 (Alpine) when running as root. Reads configuration without changing services.
 Deletes this script after successfully printing links. Keeps it on failure
 or when displaying help.
@@ -86,7 +86,7 @@ if [ -n "$missing" ]; then
     [ -r /etc/os-release ] || die "cannot identify OS; install:$missing ca-certificates"
     . /etc/os-release
     case "${ID:-}" in
-        debian)
+        debian|ubuntu)
             log "Installing dependencies with apt-get:$missing ca-certificates"
             apt-get update >&2
             # Intentional word splitting: package names come only from the fixed list above.
@@ -94,7 +94,7 @@ if [ -n "$missing" ]; then
         alpine)
             log "Installing dependencies with apk:$missing ca-certificates"
             apk add --no-cache $missing ca-certificates >&2 ;;
-        *) die 'automatic dependency installation supports Debian and Alpine only' ;;
+        *) die 'automatic dependency installation supports Debian, Ubuntu and Alpine only' ;;
     esac
 fi
 
