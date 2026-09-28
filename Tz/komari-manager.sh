@@ -7,6 +7,67 @@ manager_check_cancel() {
     case "$1" in q|Q) exit 10 ;; esac
 }
 
+manager_fetch_file() {
+    if command -v curl >/dev/null 2>&1; then
+        curl --fail --silent --show-error --location \
+            --proto '=https' --proto-redir '=https' \
+            --connect-timeout 15 --max-time 180 --retry 2 \
+            --output "$1" "$2"
+    elif command -v wget >/dev/null 2>&1; then
+        wget -q -T 180 -O "$1" "$2"
+    else
+        fail "需要 curl 或 wget 才能从 GitHub 下载 Agent"
+    fi
+}
+
+manager_download_agent() {
+    case "$1" in
+        amd64|arm64) ;;
+        *) fail "不支持的 Agent 架构：$1" ;;
+    esac
+    command -v sha1sum >/dev/null 2>&1 || fail "缺少 sha1sum，无法校验 GitHub 文件"
+    command -v wc >/dev/null 2>&1 || fail "缺少 wc，无法校验 GitHub 文件"
+    MANAGER_DOWNLOAD_DIR=$(mktemp -d "${TMPDIR:-/tmp}/komari-agent-download.XXXXXX") ||
+        fail "无法创建 Agent 下载临时目录"
+    SOURCE_BINARY="$MANAGER_DOWNLOAD_DIR/agent"
+    download_metadata="$MANAGER_DOWNLOAD_DIR/metadata.json"
+    download_name="komari-agent-linux-$1"
+    download_api="https://api.github.com/repos/Zhao242/ShanYangProxyApps/contents/Tz/$download_name?ref=main"
+    download_raw="https://raw.githubusercontent.com/Zhao242/ShanYangProxyApps/main/Tz/$download_name"
+    log "正在下载 $download_name"
+    manager_fetch_file "$download_metadata" "$download_api" ||
+        fail "无法从 GitHub 读取 $download_name 的校验信息"
+    download_expected=$(sed -n 's/.*"sha"[[:space:]]*:[[:space:]]*"\([0-9a-f]\{40\}\)".*/\1/p' "$download_metadata" | sed -n '1p')
+    case "$download_expected" in
+        ????????????????????????????????????????) ;;
+        *) fail "GitHub 返回的文件 SHA 无效" ;;
+    esac
+    manager_fetch_file "$SOURCE_BINARY" "$download_raw" ||
+        fail "无法从 GitHub 下载 $download_name"
+    [ -s "$SOURCE_BINARY" ] || fail "下载的 Agent 文件为空"
+    download_size=$(wc -c < "$SOURCE_BINARY" | tr -d '[:space:]')
+    case "$download_size" in ''|*[!0-9]*) fail "下载文件长度无效" ;; esac
+    download_actual=$(
+        { printf 'blob %s\000' "$download_size"; cat "$SOURCE_BINARY"; } |
+            sha1sum | awk '{print $1}'
+    ) || fail "无法校验下载文件"
+    [ "$download_actual" = "$download_expected" ] ||
+        fail "GitHub 文件 SHA 不匹配，已拒绝安装"
+    chmod 0700 "$SOURCE_BINARY"
+    log "下载校验通过，安装后清理临时原文件"
+}
+
+manager_download_cleanup() {
+    [ -n "${MANAGER_DOWNLOAD_DIR:-}" ] || return 0
+    case "$MANAGER_DOWNLOAD_DIR" in
+        */komari-agent-download.*) ;;
+        *) return 1 ;;
+    esac
+    rm -f -- "$MANAGER_DOWNLOAD_DIR/agent" "$MANAGER_DOWNLOAD_DIR/metadata.json" || return 1
+    rmdir -- "$MANAGER_DOWNLOAD_DIR" || return 1
+    MANAGER_DOWNLOAD_DIR=""
+}
+
 manager_backup_fail() {
     printf '%s\n' "[komari-agent] 备份失败：$*" >&2
     exit 1
@@ -117,6 +178,7 @@ STATE_DIR="/var/lib/komari-agent"
 SYSCTL_FILE="/etc/sysctl.d/99-komari-agent-ping.conf"
 
 SOURCE_BINARY=""
+MANAGER_DOWNLOAD_DIR=""
 PANEL_URL=""
 TOKEN_FILE=""
 NODE_TOKEN=""
@@ -161,14 +223,13 @@ usage() {
 Usage: komari-agent-manager-linux.sh --worker install [options]
 
 Installs the packaged Komari Agent on a new Debian, Ubuntu, or Alpine server.
-Run it as root from the directory containing the matching Agent binaries.
+Run it as root; the matching Agent is downloaded from GitHub.
 
 Options:
   --endpoint URL             panel URL; prompted when omitted
   --token-file FILE          read the node token from the first line of FILE;
                              prompted without echo when omitted
   --month-rotate DAY         traffic reset day, 0-31 (default: 0)
-  --binary FILE              packaged Agent binary (auto-detected by default)
   --service-name NAME        service name (default: komari-agent)
   --install-dir DIRECTORY    binary directory (default: /opt/komari)
   -h, --help                 show this help
@@ -193,11 +254,6 @@ while [ "$#" -gt 0 ]; do
         --month-rotate)
             [ "$#" -ge 2 ] || fail "--month-rotate requires a value"
             MONTH_ROTATE=$2
-            shift 2
-            ;;
-        --binary)
-            [ "$#" -ge 2 ] || fail "--binary requires a value"
-            SOURCE_BINARY=$2
             shift 2
             ;;
         --service-name)
@@ -271,8 +327,12 @@ rollback() {
 
 cleanup() {
     status=$?
-    manager_backup_discard
     trap - 0
+    if ! manager_download_cleanup; then
+        warn "无法清理 Agent 下载临时目录：$MANAGER_DOWNLOAD_DIR"
+        status=1
+    fi
+    manager_backup_discard || status=1
     if [ "$ECHO_DISABLED" -eq 1 ]; then
         stty echo 2>/dev/null || true
         printf '\n'
@@ -313,7 +373,7 @@ case "$INSTALL_DIR" in
         ;;
 esac
 
-for command_name in id uname sed grep tr awk dirname sha256sum cp mv chmod chown mkdir rm sleep; do
+for command_name in id uname sed grep tr awk dirname cp mv chmod chown mkdir rm sleep; do
     command -v "$command_name" >/dev/null 2>&1 || fail "required command was not found: $command_name"
 done
 
@@ -344,25 +404,14 @@ esac
 case "$(uname -m)" in
     x86_64)
         AGENT_ARCH="amd64"
-        EXPECTED_SHA256="5c072e005050b58361260e57223cbd7e01379fa7d1f09bf7603ecc907463def0"
         ;;
     aarch64|arm64)
         AGENT_ARCH="arm64"
-        EXPECTED_SHA256="aa46f72baf7fb0b346fd354821b2bac8de44553e746eafd187c7d5617ffe5226"
         ;;
     *)
         fail "unsupported architecture: $(uname -m)"
         ;;
 esac
-
-SCRIPT_DIR=${KOMARI_PACKAGE_DIR:-$(CDPATH= cd "$(dirname "$0")" && pwd)}
-if [ -z "$SOURCE_BINARY" ]; then
-    SOURCE_BINARY="${SCRIPT_DIR}/komari-agent-linux-${AGENT_ARCH}"
-fi
-[ -f "$SOURCE_BINARY" ] && [ -s "$SOURCE_BINARY" ] || fail "Agent binary not found: $SOURCE_BINARY"
-
-ACTUAL_SHA256=$(sha256sum "$SOURCE_BINARY" | awk '{print $1}')
-[ "$ACTUAL_SHA256" = "$EXPECTED_SHA256" ] || fail "binary checksum mismatch for ${AGENT_ARCH}"
 
 if [ "$INIT_SYSTEM" = "systemd" ] && systemctl cat "$SERVICE_UNIT" >/dev/null 2>&1; then
     fail "$SERVICE_UNIT already exists; return to menu option 1 to replace it"
@@ -434,6 +483,8 @@ case "$MONTH_ROTATE" in
     0|[1-9]|[12][0-9]|3[01]) ;;
     *) fail "traffic reset day must be 0-31" ;;
 esac
+
+manager_download_agent "$AGENT_ARCH"
 
 log "distribution: $OS_ID"
 log "init system: $INIT_SYSTEM"
@@ -655,6 +706,8 @@ NEW_AGENT=""
 NEW_CONTROL=""
 NEW_CONFIG=""
 STATE_TEMP=""
+SOURCE_BINARY=""
+MANAGER_DOWNLOAD_DIR=""
 STATE_MIGRATED=0
 ECHO_DISABLED=0
 
@@ -668,6 +721,9 @@ fail() {
 }
 
 cleanup() {
+    status=$?
+    trap - 0
+    set +e
     if [ "$ECHO_DISABLED" -eq 1 ]; then
         stty echo 2>/dev/null || true
         printf '\n'
@@ -676,7 +732,12 @@ cleanup() {
     [ -z "$NEW_CONTROL" ] || rm -f "$NEW_CONTROL"
     [ -z "$NEW_CONFIG" ] || rm -f "$NEW_CONFIG"
     [ -z "$STATE_TEMP" ] || rm -f "$STATE_TEMP"
-    manager_backup_discard
+    if ! manager_download_cleanup; then
+        log "无法清理 Agent 下载临时目录：$MANAGER_DOWNLOAD_DIR"
+        status=1
+    fi
+    manager_backup_discard || status=1
+    exit "$status"
 }
 
 trap cleanup 0
@@ -688,7 +749,6 @@ json_escape() {
 
 [ "$(id -u)" -eq 0 ] || fail "run this script as root"
 [ -t 0 ] || fail "an interactive terminal is required to enter endpoint and token"
-command -v sha256sum >/dev/null 2>&1 || fail "sha256sum was not found"
 
 INIT_SYSTEM=""
 CONTROL_FILE=""
@@ -716,23 +776,14 @@ fi
 case "$(uname -m)" in
     x86_64)
         AGENT_ARCH="amd64"
-        EXPECTED_SHA256="5c072e005050b58361260e57223cbd7e01379fa7d1f09bf7603ecc907463def0"
         ;;
     aarch64|arm64)
         AGENT_ARCH="arm64"
-        EXPECTED_SHA256="aa46f72baf7fb0b346fd354821b2bac8de44553e746eafd187c7d5617ffe5226"
         ;;
     *)
         fail "unsupported architecture: $(uname -m)"
         ;;
 esac
-
-SCRIPT_DIR=${KOMARI_PACKAGE_DIR:-$(CDPATH= cd "$(dirname "$0")" && pwd)}
-SOURCE_BINARY="${1:-${SCRIPT_DIR}/komari-agent-linux-${AGENT_ARCH}}"
-[ -s "$SOURCE_BINARY" ] || fail "custom binary not found: $SOURCE_BINARY"
-
-ACTUAL_SHA256=$(sha256sum "$SOURCE_BINARY" | awk '{print $1}')
-[ "$ACTUAL_SHA256" = "$EXPECTED_SHA256" ] || fail "binary checksum mismatch for ${AGENT_ARCH}"
 
 if [ "$INIT_SYSTEM" = "openrc" ]; then
     AGENT_PATH=$(sed -n 's/^command=//p' "$CONTROL_FILE" | sed -n '1p')
@@ -858,6 +909,8 @@ case "$MONTH_ROTATE" in
     0|[1-9]|[12][0-9]|3[01]) ;;
     *) fail "traffic reset day must be 0-31" ;;
 esac
+
+manager_download_agent "$AGENT_ARCH"
 
 if ! grep -q "^${SERVICE_USER}:" /etc/group; then
     if command -v groupadd >/dev/null 2>&1; then
@@ -1789,8 +1842,8 @@ manager_usage() {
   3. 卸载
   0. 退出并删除本脚本
 
-安装需要同目录下对应架构的 komari-agent-linux-amd64 或
-komari-agent-linux-arm64。修改和卸载只需要本脚本。
+安装 / 更新会从 GitHub 的 Tz 目录自动下载当前架构的 Agent。
+只需上传本管理脚本；下载的原文件在操作结束时自动删除。
 
 各输入处输入 q 可放弃本次操作并返回主菜单。
 操作完成或失败后返回菜单；选择 0、输入结束或按 Ctrl+C 时，
@@ -1837,8 +1890,6 @@ if ! cp "$MANAGER_SELF" "$MANAGER_RUNTIME/manager.sh" || ! chmod 0600 "$MANAGER_
     rmdir -- "$MANAGER_RUNTIME" 2>/dev/null || true
     manager_fail "无法准备运行文件"
 fi
-KOMARI_PACKAGE_DIR=$MANAGER_DIRECTORY
-export KOMARI_PACKAGE_DIR
 MANAGER_LOCK="/run/komari-agent-manager-$MANAGER_SERVICE.lock"
 MANAGER_OWNS_LOCK=0
 
@@ -1914,16 +1965,6 @@ manager_run() {
 }
 
 manager_install_menu() {
-    case "$(uname -m)" in
-        x86_64) manager_arch=amd64 ;;
-        aarch64|arm64) manager_arch=arm64 ;;
-        *) manager_log "不支持当前 CPU 架构。"; return ;;
-    esac
-    manager_binary="$MANAGER_DIRECTORY/komari-agent-linux-$manager_arch"
-    if [ ! -s "$manager_binary" ]; then
-        manager_log "安装需要先把 komari-agent-linux-$manager_arch 上传到脚本同目录：$MANAGER_DIRECTORY"
-        return
-    fi
     if manager_service_exists; then
         manager_log "检测到已有服务，将进入替换 / 更新流程，重新输入面板地址和 Token。"
         manager_run replace
