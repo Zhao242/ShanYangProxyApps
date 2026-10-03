@@ -1,0 +1,16 @@
+#!name=po0 防火墙自动加白 + 状态查询
+#!desc=网络变化与每 10 分钟自动加白，并提供可在 Loon 内手动运行的状态查询入口，显示全部白名单、固定槽位和当前出口网段。
+#!author=reallinzc
+#!homepage=https://github.com/w0ven/po0fw
+#!icon=https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Panel.png
+
+[Argument]
+tokens = input,"",tag=API tokens,desc=po0 防火墙 API token（pgnfw_ 开头）；多台机器用英文逗号分割；可选 token 后加 @槽位（如 pgnfw_xxx@0）钉固定坑位永不被淘汰
+
+[Rule]
+IP-CIDR,124.221.69.228/32,DIRECT,no-resolve
+
+[Script]
+cron "*/10 * * * *" script-path=https://raw.githubusercontent.com/w0ven/po0fw/main/scripts/po0-firewall-whitelist.js, timeout=60, tag=po0-fw-cron, argument=[{tokens}]
+network-changed script-path=https://raw.githubusercontent.com/w0ven/po0fw/main/scripts/po0-firewall-whitelist.js, timeout=60, tag=po0-fw-event, argument=[{tokens}]
+generic script-path=https://raw.githubusercontent.com/w0ven/po0fw/main/scripts/po0-firewall-whitelist.js, timeout=60, tag=po0 状态查询, img-url=checkmark.shield.system, argument=[{tokens}]
