@@ -1,16 +1,23 @@
-# 月饼
-HOST-SUFFIX,emby.my
+## 月饼
+HOST-SUFFIX,emby.my,PROXY
+
 # Peach
-HOST-KEYWORD,embymv
+HOST-KEYWORD,embymv,PROXY
+
 # Hxd
-HOST-KEYWORD,as174
+HOST-KEYWORD,as174,PROXY
+
 # loser
-HOST-SUFFIX,xmsl.org
+HOST-SUFFIX,xmsl.org,PROXY
+
 # uhd
-HOST-KEYWORD,uhdnow
+HOST-KEYWORD,uhdnow,PROXY
+
 # 字母
-HOST,bwm.cc.cd
+HOST,bwm.cc.cd,PROXY
+
 # 图片规则：cf.sfcj.org
-HOST,cf.sfcj.org
+HOST,cf.sfcj.org,PROXY
+
 # 图片规则：Emby 推流服务器
-HOST,media.emby.pro
+HOST,media.emby.pro,PROXY
