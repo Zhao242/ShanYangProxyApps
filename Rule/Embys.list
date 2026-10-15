@@ -1,21 +1,16 @@
-# 琴鸟
-DOMAIN-SUFFIX,lyrebirdemby.com
-IP-CIDR,188.172.228.65/32
 # 月饼
 DOMAIN-SUFFIX,emby.my
-# peach
+# Peach
 DOMAIN-KEYWORD,embymv
-# p站
-DOMAIN-KEYWORD,pilipiliultra
 # Hxd
 DOMAIN-KEYWORD,as174
 # loser
 DOMAIN-SUFFIX,xmsl.org
-
-DOMAIN,hxd.219510.xyz
-DOMAIN,loser.219510.xyz
-DOMAIN,pilipili.219510.xyz
-DOMAIN,emby.219510.xyz
-DOMAIN,lyrebird.219510.xyz
-DOMAIN,peach.219510.xyz
-
+# uhd
+DOMAIN-KEYWORD,uhdnow
+# 字母
+DOMAIN,bwm.cc.cd
+# 图片规则：cf.sfcj.org
+DOMAIN,cf.sfcj.org
+# 图片规则：Emby 推流服务器
+DOMAIN,media.emby.pro
